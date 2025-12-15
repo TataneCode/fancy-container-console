@@ -253,17 +253,41 @@ dotnet run
 
 5. **ResourceManager Approach**: Used direct ResourceManager instantiation with fully qualified resource names instead of generated Designer.cs files for better control
 
+#### 4. Fixed Volume Size and Usage Data
+- Fixed volumes always showing 0 MB for size
+- Fixed "In Use" status always showing as false/none
+- Updated `DockerVolumeAdapter.GetVolumesAsync()` to inspect each volume individually
+- Inspection retrieves full volume data including UsageData (Size and RefCount)
+
+**Issue:**
+- Docker API's `ListAsync` returns volumes without UsageData populated
+- UsageData is only available when inspecting individual volumes
+
+**Solution:**
+- Modified GetVolumesAsync to:
+  1. List all volumes
+  2. Inspect each volume individually to get usage data
+  3. Map inspected volumes with full data including size and RefCount
+  4. Fall back to basic data if inspection fails
+
+**Files Modified:**
+- `src/FancyContainerConsole/Infrastructure/Docker/DockerVolumeAdapter.cs`
+  - Updated GetVolumesAsync to inspect each volume (lines 20-43)
+  - Added try-catch for graceful degradation if inspection fails
+
 ### Testing Checklist
 - [x] Application builds successfully with no errors
-- [x] All 34 existing tests pass
-- [ ] English UI displays correctly (default)
-- [ ] French UI displays correctly with `--culture fr`
+- [x] All 44 tests pass (34 original + 10 localization)
+- [x] English UI displays correctly (default)
+- [x] French UI displays correctly with `--culture fr`
+- [x] Error messages are localized (verified in French)
 - [ ] Culture switches via environment variable `FANCY_CONTAINER_CULTURE`
 - [ ] All menus display localized text
-- [ ] All error/success messages are localized
 - [ ] Table headers and data labels are localized
 - [ ] Confirmation prompts are localized
 - [ ] Invalid culture falls back gracefully to system culture
+- [ ] Volume sizes display correctly (not 0 MB)
+- [ ] Volume "In Use" status displays correctly
 
 ## Next Steps / Future Enhancements
 - Add filtering/search functionality in dashboards

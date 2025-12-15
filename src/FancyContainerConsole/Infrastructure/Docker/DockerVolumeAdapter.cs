@@ -19,9 +19,27 @@ public sealed class DockerVolumeAdapter : IVolumeRepository, IDisposable
 
     public async Task<IEnumerable<Volume>> GetVolumesAsync(CancellationToken cancellationToken = default)
     {
+        // Get all volumes with inspect to get usage data
         var parameters = new VolumesListParameters();
         var response = await _client.Volumes.ListAsync(parameters, cancellationToken);
-        return response.Volumes.Select(DockerMapper.ToDomain);
+
+        // Inspect each volume to get usage data (size and RefCount)
+        var volumes = new List<Volume>();
+        foreach (var vol in response.Volumes)
+        {
+            try
+            {
+                var inspectedVolume = await _client.Volumes.InspectAsync(vol.Name, cancellationToken);
+                volumes.Add(DockerMapper.ToDomain(inspectedVolume));
+            }
+            catch
+            {
+                // If inspection fails, use the basic volume data
+                volumes.Add(DockerMapper.ToDomain(vol));
+            }
+        }
+
+        return volumes;
     }
 
     public async Task<Volume?> GetVolumeByNameAsync(string name, CancellationToken cancellationToken = default)
