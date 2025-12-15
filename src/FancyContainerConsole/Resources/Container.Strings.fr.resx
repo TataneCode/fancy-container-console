@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Container_Status_Loading" xml:space="preserve">
+    <value>[yellow]Chargement des conteneurs...[/]</value>
+  </data>
+  <data name="Container_Error_NoContainersFound" xml:space="preserve">
+    <value>Aucun conteneur trouvé.</value>
+  </data>
+  <data name="Container_Title_Logs" xml:space="preserve">
+    <value>Journaux du Conteneur</value>
+  </data>
+  <data name="Container_Status_FetchingLogs" xml:space="preserve">
+    <value>[yellow]Récupération des journaux...[/]</value>
+  </data>
+  <data name="Container_Status_DisplayingLogs" xml:space="preserve">
+    <value>[green]Affichage des journaux[/]</value>
+  </data>
+  <data name="Container_Error_FailedToFetchLogs" xml:space="preserve">
+    <value>Échec de la récupération des journaux: {0}</value>
+  </data>
+  <data name="Container_Status_StartingContainer" xml:space="preserve">
+    <value>[yellow]Démarrage du conteneur...[/]</value>
+  </data>
+  <data name="Container_Status_StoppingContainer" xml:space="preserve">
+    <value>[yellow]Arrêt du conteneur...[/]</value>
+  </data>
+  <data name="Container_Success_Started" xml:space="preserve">
+    <value>Conteneur démarré avec succès</value>
+  </data>
+  <data name="Container_Success_Stopped" xml:space="preserve">
+    <value>Conteneur arrêté avec succès</value>
+  </data>
+  <data name="Container_Error_FailedToStart" xml:space="preserve">
+    <value>Échec du démarrage du conteneur: {0}</value>
+  </data>
+  <data name="Container_Error_FailedToStop" xml:space="preserve">
+    <value>Échec de l'arrêt du conteneur: {0}</value>
+  </data>
+  <data name="Container_Status_Deleting" xml:space="preserve">
+    <value>[yellow]Suppression du conteneur...[/]</value>
+  </data>
+  <data name="Container_Success_Deleted" xml:space="preserve">
+    <value>Conteneur supprimé avec succès</value>
+  </data>
+  <data name="Container_Error_FailedToDelete" xml:space="preserve">
+    <value>Échec de la suppression du conteneur: {0}</value>
+  </data>
+  <data name="Container_Confirm_Delete" xml:space="preserve">
+    <value>[red]Êtes-vous sûr de vouloir supprimer le conteneur '{0}'?[/]</value>
+  </data>
+  <data name="Container_Title_Details" xml:space="preserve">
+    <value>Détails du Conteneur: {0}</value>
+  </data>
+</root>

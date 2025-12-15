@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Table_Header_Name" xml:space="preserve">
+    <value>[yellow]Name[/]</value>
+  </data>
+  <data name="Table_Header_ID" xml:space="preserve">
+    <value>[yellow]ID[/]</value>
+  </data>
+  <data name="Table_Header_Image" xml:space="preserve">
+    <value>[yellow]Image[/]</value>
+  </data>
+  <data name="Table_Header_State" xml:space="preserve">
+    <value>[yellow]State[/]</value>
+  </data>
+  <data name="Table_Header_Networks" xml:space="preserve">
+    <value>[yellow]Networks[/]</value>
+  </data>
+  <data name="Table_Header_Ports" xml:space="preserve">
+    <value>[yellow]Ports[/]</value>
+  </data>
+  <data name="Table_Header_Size" xml:space="preserve">
+    <value>[yellow]Size (MB)[/]</value>
+  </data>
+  <data name="Table_Header_InUse" xml:space="preserve">
+    <value>[yellow]In Use[/]</value>
+  </data>
+  <data name="Table_Header_Created" xml:space="preserve">
+    <value>[yellow]Created[/]</value>
+  </data>
+  <data name="Table_Header_Property" xml:space="preserve">
+    <value>[yellow]Property[/]</value>
+  </data>
+  <data name="Table_Header_Value" xml:space="preserve">
+    <value>[blue]Value[/]</value>
+  </data>
+  <data name="Table_Panel_ContainerLogs" xml:space="preserve">
+    <value>[yellow]Container Logs[/]</value>
+  </data>
+  <data name="Table_Value_NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Table_Value_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Table_Value_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Table_Property_ID" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="Table_Property_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Table_Property_Image" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="Table_Property_State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="Table_Property_Networks" xml:space="preserve">
+    <value>Networks</value>
+  </data>
+  <data name="Table_Property_PortMappings" xml:space="preserve">
+    <value>Port Mappings</value>
+  </data>
+  <data name="Table_Property_DiskSize" xml:space="preserve">
+    <value>Disk Size</value>
+  </data>
+  <data name="Table_Property_Volumes" xml:space="preserve">
+    <value>Volumes</value>
+  </data>
+  <data name="Table_Property_Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Table_Unit_MB" xml:space="preserve">
+    <value>MB</value>
+  </data>
+</root>

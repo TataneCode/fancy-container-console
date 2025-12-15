@@ -1,6 +1,7 @@
 using FancyContainerConsole.Application.DTOs;
 using FancyContainerConsole.Application.Interfaces;
 using FancyContainerConsole.UI.Helpers;
+using FancyContainerConsole.UI.Localization;
 using Spectre.Console;
 
 namespace FancyContainerConsole.UI.Menus;
@@ -9,242 +10,264 @@ public sealed class MainMenu
 {
     private readonly IContainerService _containerService;
     private readonly IVolumeService _volumeService;
+    private readonly ILocalizationService _localization;
 
-    public MainMenu(IContainerService containerService, IVolumeService volumeService)
+    public MainMenu(IContainerService containerService, IVolumeService volumeService, ILocalizationService localization)
     {
         _containerService = containerService ?? throw new ArgumentNullException(nameof(containerService));
         _volumeService = volumeService ?? throw new ArgumentNullException(nameof(volumeService));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
     }
 
     public async Task ShowAsync()
     {
         while (true)
         {
-            DisplayHelper.DisplayTitle("Main Menu");
+            DisplayHelper.DisplayTitle(_localization.Get("UI_Title_MainMenu"), _localization);
+
+            var manageContainerText = _localization.Get("UI_Choice_ManageContainer");
+            var manageVolumesText = _localization.Get("UI_Choice_ManageVolumes");
+            var exitText = _localization.Get("UI_Choice_Exit");
 
             var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title("[blue]What would you like to do?[/]")
+                    .Title(_localization.Get("UI_Prompt_WhatToDo"))
                     .AddChoices(
-                        "Interactive Container Dashboard",
-                        "Manage container",
-                        "Manage volumes",
-                        "Exit"
+                        manageContainerText,
+                        manageVolumesText,
+                        exitText
                     ));
 
-            switch (choice)
+            if (choice == manageContainerText)
             {
-                case "Interactive Container Dashboard":
-                    await ShowInteractiveContainerDashboardAsync();
-                    break;
-                case "Manage container":
-                    await ManageContainerAsync();
-                    break;
-                case "Manage volumes":
-                    await ManageVolumesAsync();
-                    break;
-                case "Exit":
-                    AnsiConsole.MarkupLine("[blue]Goodbye![/]");
-                    return;
+                await ManageContainerAsync();
+            }
+            else if (choice == manageVolumesText)
+            {
+                await ManageVolumesAsync();
+            }
+            else if (choice == exitText)
+            {
+                AnsiConsole.MarkupLine(_localization.Get("UI_Message_Goodbye"));
+                return;
             }
         }
     }
 
-    private async Task ShowInteractiveContainerDashboardAsync()
-    {
-        var interactiveMenu = new InteractiveContainerMenu(_containerService);
-        await interactiveMenu.ShowAsync();
-    }
-
     private async Task ManageVolumesAsync()
     {
-        var volumeMenu = new VolumeMenu(_volumeService);
+        var volumeMenu = new VolumeMenu(_volumeService, _localization);
         await volumeMenu.ShowAsync();
     }
 
     private async Task ManageContainerAsync()
     {
-        DisplayHelper.DisplayTitle("Manage Container");
-
-        var containers = await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Loading containers...[/]", async ctx =>
-            {
-                return (await _containerService.GetAllContainersAsync()).ToList();
-            });
-
-        if (!containers.Any())
-        {
-            DisplayHelper.DisplayError("No containers found.");
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-            Console.ReadKey(true);
-            return;
-        }
-
-        var allChoices = new List<object> { "← Back to Main Menu" };
-        allChoices.AddRange(containers);
-
-        var selectedOption = AnsiConsole.Prompt(
-            new SelectionPrompt<object>()
-                .Title("[blue]Select a container (use arrow keys):[/]")
-                .AddChoices(allChoices)
-                .UseConverter(choice => choice is ContainerDto c
-                    ? $"{Markup.Escape(c.Name)} ({Markup.Escape(c.State)})"
-                    : choice.ToString()!)
-        );
-
-        if (selectedOption is string)
-        {
-            return;
-        }
-
-        var selectedContainer = (ContainerDto)selectedOption;
-        await ShowContainerActionsAsync(selectedContainer);
-    }
-
-    private async Task ShowContainerActionsAsync(ContainerDto container)
-    {
         while (true)
         {
-            DisplayHelper.DisplayTitle($"Container: {container.Name}");
+            DisplayHelper.DisplayTitle(_localization.Get("UI_Title_ManageContainer"), _localization);
 
-            AnsiConsole.MarkupLine($"[blue]ID:[/] {container.Id}");
-            AnsiConsole.MarkupLine($"[blue]Image:[/] {container.Image}");
-            AnsiConsole.MarkupLine($"[blue]State:[/] {container.State}");
+            var containers = await AnsiConsole.Status()
+                .Spinner(Spinner.Known.Dots)
+                .StartAsync(_localization.Get("Container_Status_Loading"), async ctx =>
+                {
+                    return (await _containerService.GetAllContainersAsync()).ToList();
+                });
+
+            if (!containers.Any())
+            {
+                DisplayHelper.DisplayError(_localization.Get("Container_Error_NoContainersFound"), _localization);
+                AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKeyReturn"));
+                Console.ReadKey(true);
+                return;
+            }
+
+            DisplayHelper.DisplayContainers(containers, _localization);
+
             AnsiConsole.WriteLine();
 
-            var action = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("[blue]What would you like to do?[/]")
-                    .AddChoices(
-                        "← Back to main menu",
-                        "View logs",
-                        "Start container",
-                        "Stop container",
-                        "Delete container"
-                    ));
+            var backText = _localization.Get("UI_Choice_BackToMainMenu");
+            var allChoices = new List<object> { backText };
+            allChoices.AddRange(containers);
 
-            switch (action)
+            var selectedOption = AnsiConsole.Prompt(
+                new SelectionPrompt<object>()
+                    .Title(_localization.Get("UI_Prompt_SelectContainer"))
+                    .AddChoices(allChoices)
+                    .UseConverter(choice => choice is ContainerDto c
+                        ? $"{Markup.Escape(c.Name)} ({Markup.Escape(c.State)})"
+                        : choice.ToString()!)
+            );
+
+            if (selectedOption is string)
             {
-                case "← Back to main menu":
-                    return;
-                case "View logs":
-                    await ViewLogsAsync(container.Id);
-                    break;
-                case "Start container":
-                    await StartContainerAsync(container.Id);
-                    break;
-                case "Stop container":
-                    await StopContainerAsync(container.Id);
-                    break;
-                case "Delete container":
-                    if (await ConfirmDeleteAsync(container))
-                    {
-                        await DeleteContainerAsync(container.Id);
-                        return;
-                    }
-                    break;
+                return;
             }
+
+            var selectedContainer = (ContainerDto)selectedOption;
+            var action = await PromptForContainerActionAsync();
+
+            if (action == ContainerActionType.Back)
+            {
+                return;
+            }
+
+            await HandleContainerActionAsync(selectedContainer, action);
+        }
+    }
+
+    private Task<ContainerActionType> PromptForContainerActionAsync()
+    {
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine(_localization.Get("UI_Prompt_ContainerActions"));
+
+        while (true)
+        {
+            var key = Console.ReadKey(true);
+
+            var action = key.Key switch
+            {
+                ConsoleKey.L => ContainerActionType.ViewLogs,
+                ConsoleKey.S => ContainerActionType.StartStop,
+                ConsoleKey.D => ContainerActionType.Delete,
+                ConsoleKey.C => ContainerActionType.ViewDetails,
+                ConsoleKey.Escape => ContainerActionType.Back,
+                _ => (ContainerActionType?)null
+            };
+
+            if (action.HasValue)
+            {
+                return Task.FromResult(action.Value);
+            }
+        }
+    }
+
+    private async Task HandleContainerActionAsync(ContainerDto container, ContainerActionType action)
+    {
+        switch (action)
+        {
+            case ContainerActionType.ViewLogs:
+                await ViewLogsAsync(container.Id);
+                break;
+            case ContainerActionType.StartStop:
+                await StartStopContainerAsync(container);
+                break;
+            case ContainerActionType.Delete:
+                await DeleteContainerAsync(container);
+                break;
+            case ContainerActionType.ViewDetails:
+                await ViewDetailsAsync(container);
+                break;
         }
     }
 
     private async Task ViewLogsAsync(string containerId)
     {
-        DisplayHelper.DisplayTitle("Container Logs");
+        DisplayHelper.DisplayTitle(_localization.Get("Container_Title_Logs"), _localization);
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Fetching logs...[/]", async ctx =>
+            .StartAsync(_localization.Get("Container_Status_FetchingLogs"), async ctx =>
             {
                 try
                 {
                     var logs = await _containerService.GetContainerLogsAsync(containerId);
-                    ctx.Status("[green]Displaying logs[/]");
-                    DisplayHelper.DisplayLogs(logs);
+                    ctx.Status(_localization.Get("Container_Status_DisplayingLogs"));
+                    DisplayHelper.DisplayLogs(logs, _localization);
                 }
                 catch (Exception ex)
                 {
-                    DisplayHelper.DisplayError($"Failed to fetch logs: {ex.Message}");
+                    DisplayHelper.DisplayError(_localization.Get("Container_Error_FailedToFetchLogs", ex.Message), _localization);
                 }
             });
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
+        AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
         Console.ReadKey(true);
     }
 
-    private async Task StartContainerAsync(string containerId)
+    private async Task StartStopContainerAsync(ContainerDto container)
     {
+        var isRunning = container.State.ToLowerInvariant() == "running";
+        var statusKey = isRunning ? "Container_Status_StoppingContainer" : "Container_Status_StartingContainer";
+
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Starting container...[/]", async ctx =>
+            .StartAsync(_localization.Get(statusKey), async ctx =>
             {
                 try
                 {
-                    await _containerService.StartContainerAsync(containerId);
-                    DisplayHelper.DisplaySuccess("Container started successfully");
+                    if (isRunning)
+                    {
+                        await _containerService.StopContainerAsync(container.Id);
+                        DisplayHelper.DisplaySuccess(_localization.Get("Container_Success_Stopped"), _localization);
+                    }
+                    else
+                    {
+                        await _containerService.StartContainerAsync(container.Id);
+                        DisplayHelper.DisplaySuccess(_localization.Get("Container_Success_Started"), _localization);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    DisplayHelper.DisplayError($"Failed to start container: {ex.Message}");
+                    var errorKey = isRunning ? "Container_Error_FailedToStop" : "Container_Error_FailedToStart";
+                    DisplayHelper.DisplayError(_localization.Get(errorKey, ex.Message), _localization);
                 }
             });
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
+        AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
         Console.ReadKey(true);
     }
 
-    private async Task StopContainerAsync(string containerId)
-    {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Stopping container...[/]", async ctx =>
-            {
-                try
-                {
-                    await _containerService.StopContainerAsync(containerId);
-                    DisplayHelper.DisplaySuccess("Container stopped successfully");
-                }
-                catch (Exception ex)
-                {
-                    DisplayHelper.DisplayError($"Failed to stop container: {ex.Message}");
-                }
-            });
-
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-        Console.ReadKey(true);
-    }
-
-    private async Task DeleteContainerAsync(string containerId)
-    {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Deleting container...[/]", async ctx =>
-            {
-                try
-                {
-                    await _containerService.DeleteContainerAsync(containerId);
-                    DisplayHelper.DisplaySuccess("Container deleted successfully");
-                }
-                catch (Exception ex)
-                {
-                    DisplayHelper.DisplayError($"Failed to delete container: {ex.Message}");
-                }
-            });
-
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-        Console.ReadKey(true);
-    }
-
-    private static Task<bool> ConfirmDeleteAsync(ContainerDto container)
+    private async Task DeleteContainerAsync(ContainerDto container)
     {
         var confirm = AnsiConsole.Confirm(
-            $"[red]Are you sure you want to delete container '{container.Name}'?[/]",
+            _localization.Get("Container_Confirm_Delete", container.Name),
             false);
 
-        return Task.FromResult(confirm);
+        if (!confirm)
+        {
+            return;
+        }
+
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync(_localization.Get("Container_Status_Deleting"), async ctx =>
+            {
+                try
+                {
+                    await _containerService.DeleteContainerAsync(container.Id);
+                    DisplayHelper.DisplaySuccess(_localization.Get("Container_Success_Deleted"), _localization);
+                }
+                catch (Exception ex)
+                {
+                    DisplayHelper.DisplayError(_localization.Get("Container_Error_FailedToDelete", ex.Message), _localization);
+                }
+            });
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
+        Console.ReadKey(true);
+    }
+
+    private async Task ViewDetailsAsync(ContainerDto container)
+    {
+        DisplayHelper.DisplayTitle(_localization.Get("Container_Title_Details", container.Name), _localization);
+        DisplayHelper.DisplayContainerDetails(container, _localization);
+
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
+        Console.ReadKey(true);
+
+        await Task.CompletedTask;
+    }
+
+    private enum ContainerActionType
+    {
+        ViewLogs,
+        StartStop,
+        Delete,
+        ViewDetails,
+        Back
     }
 }

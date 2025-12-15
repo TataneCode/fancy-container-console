@@ -1,6 +1,7 @@
 using FancyContainerConsole.Application.DTOs;
 using FancyContainerConsole.Application.Interfaces;
 using FancyContainerConsole.UI.Helpers;
+using FancyContainerConsole.UI.Localization;
 using Spectre.Console;
 
 namespace FancyContainerConsole.UI.Menus;
@@ -8,46 +9,49 @@ namespace FancyContainerConsole.UI.Menus;
 public sealed class VolumeMenu
 {
     private readonly IVolumeService _volumeService;
+    private readonly ILocalizationService _localization;
 
-    public VolumeMenu(IVolumeService volumeService)
+    public VolumeMenu(IVolumeService volumeService, ILocalizationService localization)
     {
         _volumeService = volumeService ?? throw new ArgumentNullException(nameof(volumeService));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
     }
 
     public async Task ShowAsync()
     {
         while (true)
         {
-            DisplayHelper.DisplayTitle("Volume Management");
+            DisplayHelper.DisplayTitle(_localization.Get("Volume_Title_Management"), _localization);
 
             var volumes = await AnsiConsole.Status()
                 .Spinner(Spinner.Known.Dots)
-                .StartAsync("[yellow]Loading volumes...[/]", async ctx =>
+                .StartAsync(_localization.Get("Volume_Status_Loading"), async ctx =>
                 {
                     return (await _volumeService.GetAllVolumesAsync()).ToList();
                 });
 
             if (!volumes.Any())
             {
-                DisplayHelper.DisplayError("No volumes found.");
-                AnsiConsole.MarkupLine("[grey]Press any key to return to main menu...[/]");
+                DisplayHelper.DisplayError(_localization.Get("Volume_Error_NoVolumesFound"), _localization);
+                AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKeyReturn"));
                 Console.ReadKey(true);
                 return;
             }
 
-            DisplayHelper.DisplayVolumes(volumes);
+            DisplayHelper.DisplayVolumes(volumes, _localization);
 
             AnsiConsole.WriteLine();
 
-            var allChoices = new List<object> { "← Back to Main Menu" };
+            var backText = _localization.Get("UI_Choice_BackToMainMenu");
+            var allChoices = new List<object> { backText };
             allChoices.AddRange(volumes);
 
             var selectedOption = AnsiConsole.Prompt(
                 new SelectionPrompt<object>()
-                    .Title("[blue]Select a volume (use arrow keys):[/]")
+                    .Title(_localization.Get("Volume_Prompt_SelectVolume"))
                     .AddChoices(allChoices)
                     .UseConverter(choice => choice is VolumeDto v
-                        ? $"{Markup.Escape(v.Name)} ({(v.InUse ? "In use" : "Not in use")})"
+                        ? $"{Markup.Escape(v.Name)} ({(v.InUse ? _localization.Get("Volume_Status_InUse") : _localization.Get("Volume_Status_NotInUse"))})"
                         : choice.ToString()!)
             );
 
@@ -73,7 +77,7 @@ public sealed class VolumeMenu
 
     private async Task<ActionType> PromptForActionAsync()
     {
-        AnsiConsole.MarkupLine("[yellow]Press D (delete) or ESC (back)[/]");
+        AnsiConsole.MarkupLine(_localization.Get("Volume_Prompt_Actions"));
 
         while (true)
         {
@@ -92,14 +96,14 @@ public sealed class VolumeMenu
     {
         if (volume.InUse)
         {
-            DisplayHelper.DisplayError("Cannot delete volume that is currently in use.");
-            AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
+            DisplayHelper.DisplayError(_localization.Get("Volume_Error_InUse"), _localization);
+            AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
             Console.ReadKey(true);
             return;
         }
 
         var confirm = AnsiConsole.Confirm(
-            $"[red]Are you sure you want to delete volume '{volume.Name}'?[/]",
+            _localization.Get("Volume_Confirm_Delete", volume.Name),
             false);
 
         if (!confirm)
@@ -109,21 +113,21 @@ public sealed class VolumeMenu
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Deleting volume...[/]", async ctx =>
+            .StartAsync(_localization.Get("Volume_Status_Deleting"), async ctx =>
             {
                 try
                 {
                     await _volumeService.DeleteVolumeAsync(volume.Name);
-                    DisplayHelper.DisplaySuccess("Volume deleted successfully");
+                    DisplayHelper.DisplaySuccess(_localization.Get("Volume_Success_Deleted"), _localization);
                 }
                 catch (Exception ex)
                 {
-                    DisplayHelper.DisplayError($"Failed to delete volume: {ex.Message}");
+                    DisplayHelper.DisplayError(_localization.Get("Volume_Error_FailedToDelete", ex.Message), _localization);
                 }
             });
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
+        AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
         Console.ReadKey(true);
     }
 

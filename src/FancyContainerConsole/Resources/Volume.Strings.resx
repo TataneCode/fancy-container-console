@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Volume_Title_Management" xml:space="preserve">
+    <value>Volume Management</value>
+  </data>
+  <data name="Volume_Status_Loading" xml:space="preserve">
+    <value>[yellow]Loading volumes...[/]</value>
+  </data>
+  <data name="Volume_Error_NoVolumesFound" xml:space="preserve">
+    <value>No volumes found.</value>
+  </data>
+  <data name="Volume_Prompt_SelectVolume" xml:space="preserve">
+    <value>[blue]Select a volume (use arrow keys):[/]</value>
+  </data>
+  <data name="Volume_Prompt_Actions" xml:space="preserve">
+    <value>[yellow]Press D (delete) or ESC (back)[/]</value>
+  </data>
+  <data name="Volume_Status_InUse" xml:space="preserve">
+    <value>In use</value>
+  </data>
+  <data name="Volume_Status_NotInUse" xml:space="preserve">
+    <value>Not in use</value>
+  </data>
+  <data name="Volume_Error_InUse" xml:space="preserve">
+    <value>Cannot delete volume that is currently in use.</value>
+  </data>
+  <data name="Volume_Confirm_Delete" xml:space="preserve">
+    <value>[red]Are you sure you want to delete volume '{0}'?[/]</value>
+  </data>
+  <data name="Volume_Status_Deleting" xml:space="preserve">
+    <value>[yellow]Deleting volume...[/]</value>
+  </data>
+  <data name="Volume_Success_Deleted" xml:space="preserve">
+    <value>Volume deleted successfully</value>
+  </data>
+  <data name="Volume_Error_FailedToDelete" xml:space="preserve">
+    <value>Failed to delete volume: {0}</value>
+  </data>
+</root>

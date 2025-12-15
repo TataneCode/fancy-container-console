@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Container_Status_Loading" xml:space="preserve">
+    <value>[yellow]Loading containers...[/]</value>
+  </data>
+  <data name="Container_Error_NoContainersFound" xml:space="preserve">
+    <value>No containers found.</value>
+  </data>
+  <data name="Container_Title_Logs" xml:space="preserve">
+    <value>Container Logs</value>
+  </data>
+  <data name="Container_Status_FetchingLogs" xml:space="preserve">
+    <value>[yellow]Fetching logs...[/]</value>
+  </data>
+  <data name="Container_Status_DisplayingLogs" xml:space="preserve">
+    <value>[green]Displaying logs[/]</value>
+  </data>
+  <data name="Container_Error_FailedToFetchLogs" xml:space="preserve">
+    <value>Failed to fetch logs: {0}</value>
+  </data>
+  <data name="Container_Status_StartingContainer" xml:space="preserve">
+    <value>[yellow]Starting container...[/]</value>
+  </data>
+  <data name="Container_Status_StoppingContainer" xml:space="preserve">
+    <value>[yellow]Stopping container...[/]</value>
+  </data>
+  <data name="Container_Success_Started" xml:space="preserve">
+    <value>Container started successfully</value>
+  </data>
+  <data name="Container_Success_Stopped" xml:space="preserve">
+    <value>Container stopped successfully</value>
+  </data>
+  <data name="Container_Error_FailedToStart" xml:space="preserve">
+    <value>Failed to start container: {0}</value>
+  </data>
+  <data name="Container_Error_FailedToStop" xml:space="preserve">
+    <value>Failed to stop container: {0}</value>
+  </data>
+  <data name="Container_Status_Deleting" xml:space="preserve">
+    <value>[yellow]Deleting container...[/]</value>
+  </data>
+  <data name="Container_Success_Deleted" xml:space="preserve">
+    <value>Container deleted successfully</value>
+  </data>
+  <data name="Container_Error_FailedToDelete" xml:space="preserve">
+    <value>Failed to delete container: {0}</value>
+  </data>
+  <data name="Container_Confirm_Delete" xml:space="preserve">
+    <value>[red]Are you sure you want to delete container '{0}'?[/]</value>
+  </data>
+  <data name="Container_Title_Details" xml:space="preserve">
+    <value>Container Details: {0}</value>
+  </data>
+</root>
