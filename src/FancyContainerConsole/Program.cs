@@ -37,6 +37,8 @@ services.AddSingleton<IContainerRepository, DockerClientAdapter>();
 services.AddSingleton<IContainerService, ContainerService>();
 services.AddSingleton<IVolumeRepository, DockerVolumeAdapter>();
 services.AddSingleton<IVolumeService, VolumeService>();
+services.AddSingleton<IImageRepository, DockerImageAdapter>();
+services.AddSingleton<IImageService, ImageService>();
 services.AddSingleton<MainMenu>();
 
 services.AddLogging(builder =>

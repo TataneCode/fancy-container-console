@@ -20,6 +20,7 @@ public sealed class LocalizationService : ILocalizationService
             ["UI"] = new ResourceManager("FancyContainerConsole.Resources.UI.Strings", assembly),
             ["Container"] = new ResourceManager("FancyContainerConsole.Resources.Container.Strings", assembly),
             ["Volume"] = new ResourceManager("FancyContainerConsole.Resources.Volume.Strings", assembly),
+            ["Image"] = new ResourceManager("FancyContainerConsole.Resources.Image.Strings", assembly),
             ["Messages"] = new ResourceManager("FancyContainerConsole.Resources.Messages.Strings", assembly),
             ["Table"] = new ResourceManager("FancyContainerConsole.Resources.Table.Strings", assembly)
         };

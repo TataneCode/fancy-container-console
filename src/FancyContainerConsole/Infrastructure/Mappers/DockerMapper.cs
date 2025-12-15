@@ -37,15 +37,15 @@ public static class DockerMapper
         return new Container(containerId, name, image, state, createdAt, ports, portMappings, networks, memoryUsage, volumes);
     }
 
-    public static Volume ToDomain(VolumeResponse dockerVolume, bool? isInUse = null)
+    public static Volume ToDomain(VolumeResponse dockerVolume, bool? isInUse = null, long? sizeOverride = null)
     {
         ArgumentNullException.ThrowIfNull(dockerVolume);
 
         var volumeId = new VolumeId(dockerVolume.Name);
         var name = dockerVolume.Name;
 
-        // Try to get size from UsageData
-        long size = dockerVolume.UsageData?.Size ?? 0L;
+        // Use provided size override if available, otherwise try to get from UsageData
+        long size = sizeOverride ?? dockerVolume.UsageData?.Size ?? 0L;
 
         // Use provided isInUse value if available, otherwise try to get from UsageData
         bool inUseValue;
@@ -61,6 +61,70 @@ public static class DockerMapper
         var createdAt = DateTime.TryParse(dockerVolume.CreatedAt, out var dt) ? dt : DateTime.MinValue;
 
         return new Volume(volumeId, name, size, inUseValue, createdAt);
+    }
+
+    public static Image ToDomain(ImagesListResponse dockerImage, bool isInUse = false)
+    {
+        ArgumentNullException.ThrowIfNull(dockerImage);
+
+        var imageId = new ImageId(dockerImage.ID);
+
+        // Parse repository and tag from RepoTags
+        string repository = "none";
+        string tag = "none";
+
+        if (dockerImage.RepoTags != null && dockerImage.RepoTags.Count > 0)
+        {
+            var repoTag = dockerImage.RepoTags[0];
+            var parts = repoTag.Split(':');
+            if (parts.Length == 2)
+            {
+                repository = parts[0];
+                tag = parts[1];
+            }
+            else if (parts.Length == 1)
+            {
+                repository = parts[0];
+            }
+        }
+
+        var size = dockerImage.Size;
+        // Created is already a DateTime
+        var createdAt = dockerImage.Created;
+
+        return new Domain.Entities.Image(imageId, repository, tag, size, createdAt, isInUse);
+    }
+
+    public static Image ToDomain(ImageInspectResponse dockerImage, bool isInUse = false)
+    {
+        ArgumentNullException.ThrowIfNull(dockerImage);
+
+        var imageId = new ImageId(dockerImage.ID);
+
+        // Parse repository and tag from RepoTags
+        string repository = "none";
+        string tag = "none";
+
+        if (dockerImage.RepoTags != null && dockerImage.RepoTags.Count > 0)
+        {
+            var repoTag = dockerImage.RepoTags[0];
+            var parts = repoTag.Split(':');
+            if (parts.Length == 2)
+            {
+                repository = parts[0];
+                tag = parts[1];
+            }
+            else if (parts.Length == 1)
+            {
+                repository = parts[0];
+            }
+        }
+
+        var size = dockerImage.Size;
+        // Created is already a DateTime
+        var createdAt = dockerImage.Created;
+
+        return new Domain.Entities.Image(imageId, repository, tag, size, createdAt, isInUse);
     }
 
     private static Domain.Enums.ContainerState MapState(string state)

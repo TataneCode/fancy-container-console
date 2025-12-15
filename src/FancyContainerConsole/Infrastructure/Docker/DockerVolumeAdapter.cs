@@ -43,6 +43,9 @@ public sealed class DockerVolumeAdapter : IVolumeRepository, IDisposable
             }
         }
 
+        // Get all volume sizes at once using docker system df
+        var volumeSizes = await GetAllVolumeSizesAsync();
+
         // Inspect each volume to get full data and check if in use
         var volumes = new List<Volume>();
         foreach (var vol in response.Volumes)
@@ -51,13 +54,22 @@ public sealed class DockerVolumeAdapter : IVolumeRepository, IDisposable
             {
                 var inspectedVolume = await _client.Volumes.InspectAsync(vol.Name, cancellationToken);
                 var isInUse = volumesInUse.Contains(vol.Name);
-                volumes.Add(DockerMapper.ToDomain(inspectedVolume, isInUse));
+
+                // Use size from docker system df if UsageData is not available
+                long size = inspectedVolume.UsageData?.Size ?? 0L;
+                if (size == 0 && volumeSizes.TryGetValue(vol.Name, out var calculatedSize))
+                {
+                    size = calculatedSize;
+                }
+
+                volumes.Add(DockerMapper.ToDomain(inspectedVolume, isInUse, size));
             }
             catch
             {
                 // If inspection fails, use the basic volume data
                 var isInUse = volumesInUse.Contains(vol.Name);
-                volumes.Add(DockerMapper.ToDomain(vol, isInUse));
+                long size = volumeSizes.TryGetValue(vol.Name, out var calculatedSize) ? calculatedSize : 0L;
+                volumes.Add(DockerMapper.ToDomain(vol, isInUse, size));
             }
         }
 
@@ -78,11 +90,122 @@ public sealed class DockerVolumeAdapter : IVolumeRepository, IDisposable
                 c.Mounts != null &&
                 c.Mounts.Any(m => m.Type == "volume" && m.Name == name));
 
-            return DockerMapper.ToDomain(volume, isInUse);
+            // Use size from docker system df if UsageData is not available
+            long size = volume.UsageData?.Size ?? 0L;
+            if (size == 0)
+            {
+                var volumeSizes = await GetAllVolumeSizesAsync();
+                if (volumeSizes.TryGetValue(name, out var calculatedSize))
+                {
+                    size = calculatedSize;
+                }
+            }
+
+            return DockerMapper.ToDomain(volume, isInUse, size);
         }
         catch
         {
             return null;
+        }
+    }
+
+    private async Task<Dictionary<string, long>> GetAllVolumeSizesAsync()
+    {
+        var volumeSizes = new Dictionary<string, long>();
+
+        try
+        {
+            // Use docker system df -v to get volume sizes
+            // This doesn't require elevated privileges and is more efficient than calling it per volume
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "docker",
+                Arguments = "system df -v --format \"{{json .Volumes}}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process == null)
+            {
+                return volumeSizes;
+            }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                return volumeSizes;
+            }
+
+            // Parse JSON output to build a dictionary of volume names to sizes
+            using var document = System.Text.Json.JsonDocument.Parse(output);
+            var volumes = document.RootElement;
+
+            if (volumes.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var vol in volumes.EnumerateArray())
+                {
+                    if (vol.TryGetProperty("Name", out var name) &&
+                        vol.TryGetProperty("Size", out var size))
+                    {
+                        var volumeName = name.GetString();
+                        var sizeStr = size.GetString() ?? "0B";
+
+                        if (!string.IsNullOrEmpty(volumeName))
+                        {
+                            volumeSizes[volumeName] = ParseDockerSize(sizeStr);
+                        }
+                    }
+                }
+            }
+
+            return volumeSizes;
+        }
+        catch
+        {
+            // If we can't get sizes, return empty dictionary
+            return volumeSizes;
+        }
+    }
+
+    private static long ParseDockerSize(string sizeStr)
+    {
+        try
+        {
+            // Parse Docker size format (e.g., "1.014GB", "526.1kB", "48.41MB", "0B")
+            sizeStr = sizeStr.Trim().ToUpperInvariant();
+
+            if (sizeStr == "0B" || string.IsNullOrEmpty(sizeStr))
+            {
+                return 0L;
+            }
+
+            // Extract number and unit
+            var numStr = new string(sizeStr.TakeWhile(c => char.IsDigit(c) || c == '.').ToArray());
+            var unit = new string(sizeStr.SkipWhile(c => char.IsDigit(c) || c == '.').ToArray());
+
+            if (!double.TryParse(numStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number))
+            {
+                return 0L;
+            }
+
+            // Convert to bytes
+            return unit switch
+            {
+                "B" => (long)number,
+                "KB" => (long)(number * 1024),
+                "MB" => (long)(number * 1024 * 1024),
+                "GB" => (long)(number * 1024 * 1024 * 1024),
+                "TB" => (long)(number * 1024L * 1024 * 1024 * 1024),
+                _ => 0L
+            };
+        }
+        catch
+        {
+            return 0L;
         }
     }
 

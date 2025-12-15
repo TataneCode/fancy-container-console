@@ -10,12 +10,14 @@ public sealed class MainMenu
 {
     private readonly IContainerService _containerService;
     private readonly IVolumeService _volumeService;
+    private readonly IImageService _imageService;
     private readonly ILocalizationService _localization;
 
-    public MainMenu(IContainerService containerService, IVolumeService volumeService, ILocalizationService localization)
+    public MainMenu(IContainerService containerService, IVolumeService volumeService, IImageService imageService, ILocalizationService localization)
     {
         _containerService = containerService ?? throw new ArgumentNullException(nameof(containerService));
         _volumeService = volumeService ?? throw new ArgumentNullException(nameof(volumeService));
+        _imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
     }
 
@@ -27,6 +29,7 @@ public sealed class MainMenu
 
             var manageContainerText = _localization.Get("UI_Choice_ManageContainer");
             var manageVolumesText = _localization.Get("UI_Choice_ManageVolumes");
+            var manageImagesText = _localization.Get("UI_Choice_ManageImages");
             var exitText = _localization.Get("UI_Choice_Exit");
 
             var choice = AnsiConsole.Prompt(
@@ -35,6 +38,7 @@ public sealed class MainMenu
                     .AddChoices(
                         manageContainerText,
                         manageVolumesText,
+                        manageImagesText,
                         exitText
                     ));
 
@@ -45,6 +49,10 @@ public sealed class MainMenu
             else if (choice == manageVolumesText)
             {
                 await ManageVolumesAsync();
+            }
+            else if (choice == manageImagesText)
+            {
+                await ManageImagesAsync();
             }
             else if (choice == exitText)
             {
@@ -58,6 +66,12 @@ public sealed class MainMenu
     {
         var volumeMenu = new VolumeMenu(_volumeService, _localization);
         await volumeMenu.ShowAsync();
+    }
+
+    private async Task ManageImagesAsync()
+    {
+        var imageMenu = new ImageMenu(_imageService, _localization);
+        await imageMenu.ShowAsync();
     }
 
     private async Task ManageContainerAsync()

@@ -275,6 +275,40 @@ dotnet run
   - Updated GetVolumesAsync to inspect each volume (lines 20-43)
   - Added try-catch for graceful degradation if inspection fails
 
+#### 5. Fixed Volume Size Using Docker System DF (2025-12-15)
+- Fixed volumes still showing 0 MB for size despite previous fix
+- Root cause: Docker API's `UsageData` field is not populated even when inspecting volumes
+- Solution: Use `docker system df -v` command to retrieve volume sizes
+
+**Issue:**
+- Previous fix attempted to use `VolumeResponse.UsageData.Size`, but this field is null on most systems
+- Docker daemon doesn't always populate UsageData even during volume inspection
+- Alternative approach using `du` command requires elevated privileges to access volume directories
+
+**Solution:**
+- Modified `DockerVolumeAdapter` to use `docker system df -v` command:
+  1. Call `docker system df -v --format "{{json .Volumes}}"` to get all volume sizes at once
+  2. Parse JSON output to extract size information for each volume
+  3. Parse Docker size format (e.g., "1.014GB", "526.1kB", "48.41MB") and convert to bytes
+  4. Use calculated sizes when `UsageData.Size` is not available
+  5. Fall back to 0 if size calculation fails
+
+**Benefits:**
+- Doesn't require elevated privileges (unlike direct filesystem access with `du`)
+- More efficient - fetches all volume sizes in a single command
+- Uses Docker's own calculation, ensuring accuracy
+- Works on all Docker installations
+
+**Files Modified:**
+- `src/FancyContainerConsole/Infrastructure/Docker/DockerVolumeAdapter.cs`
+  - Added `GetAllVolumeSizesAsync()` method to fetch all volume sizes using docker system df (lines 112-168)
+  - Added `ParseDockerSize()` method to parse Docker size format (e.g., "1.014GB") to bytes (lines 170-196)
+  - Updated `GetVolumesAsync()` to use size dictionary from docker system df (lines 46-47, 59-63, 71)
+  - Updated `GetVolumeByNameAsync()` to use size from docker system df (lines 95-101)
+- `src/FancyContainerConsole/Infrastructure/Mappers/DockerMapper.cs`
+  - Updated `ToDomain()` method signature to accept optional size override parameter (line 40)
+  - Use size override if provided, otherwise fallback to UsageData.Size (line 48)
+
 ### Testing Checklist
 - [x] Application builds successfully with no errors
 - [x] All 44 tests pass (34 original + 10 localization)
@@ -286,8 +320,8 @@ dotnet run
 - [ ] Table headers and data labels are localized
 - [ ] Confirmation prompts are localized
 - [ ] Invalid culture falls back gracefully to system culture
-- [ ] Volume sizes display correctly (not 0 MB)
-- [ ] Volume "In Use" status displays correctly
+- [x] Volume sizes display correctly (using docker system df)
+- [x] Volume "In Use" status displays correctly
 
 ## Next Steps / Future Enhancements
 - Add filtering/search functionality in dashboards

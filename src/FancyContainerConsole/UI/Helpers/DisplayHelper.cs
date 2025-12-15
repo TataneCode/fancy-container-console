@@ -149,6 +149,66 @@ public static class DisplayHelper
         AnsiConsole.Write(table);
     }
 
+    public static void DisplayImages(IEnumerable<ImageDto> images, ILocalizationService localization)
+    {
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.AddColumn(localization.Get("Table_Header_Repository"));
+        table.AddColumn(localization.Get("Table_Header_Tag"));
+        table.AddColumn(localization.Get("Table_Header_ImageID"));
+        table.AddColumn(localization.Get("Table_Header_Size"));
+        table.AddColumn(localization.Get("Table_Header_Created"));
+        table.AddColumn(localization.Get("Table_Header_InUse"));
+
+        foreach (var image in images)
+        {
+            var inUseColor = image.InUse ? "green" : "grey";
+            var inUseText = image.InUse
+                ? localization.Get("Table_Value_Yes")
+                : localization.Get("Table_Value_No");
+            var sizeMb = image.Size / 1024 / 1024;
+            var shortId = image.Id.Length > 12 ? image.Id[..12] : image.Id;
+
+            table.AddRow(
+                image.Repository,
+                image.Tag,
+                shortId,
+                sizeMb.ToString(),
+                image.CreatedAt != DateTime.MinValue
+                    ? image.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    : localization.Get("Table_Value_NotAvailable"),
+                $"[{inUseColor}]{inUseText}[/]"
+            );
+        }
+
+        AnsiConsole.Write(table);
+    }
+
+    public static void DisplayImageDetails(ImageDto image, ILocalizationService localization)
+    {
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.AddColumn(localization.Get("Table_Header_Property"));
+        table.AddColumn(localization.Get("Table_Header_Value"));
+
+        table.AddRow(localization.Get("Table_Property_ImageID"), image.Id);
+        table.AddRow(localization.Get("Table_Property_Repository"), image.Repository);
+        table.AddRow(localization.Get("Table_Property_Tag"), image.Tag);
+
+        var sizeMb = image.Size / 1024 / 1024;
+        table.AddRow(localization.Get("Table_Property_Size"), $"{sizeMb} {localization.Get("Table_Unit_MB")}");
+
+        table.AddRow(localization.Get("Table_Property_Created"), image.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+
+        var inUseColor = image.InUse ? "green" : "grey";
+        var inUseText = image.InUse
+            ? localization.Get("Table_Value_Yes")
+            : localization.Get("Table_Value_No");
+        table.AddRow(localization.Get("Table_Property_InUse"), $"[{inUseColor}]{inUseText}[/]");
+
+        AnsiConsole.Write(table);
+    }
+
     private static string GetStateColor(string state)
     {
         return state.ToLowerInvariant() switch

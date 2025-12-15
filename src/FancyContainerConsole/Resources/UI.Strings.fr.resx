@@ -24,6 +24,9 @@
   <data name="UI_Choice_ManageVolumes" xml:space="preserve">
     <value>Gérer les volumes</value>
   </data>
+  <data name="UI_Choice_ManageImages" xml:space="preserve">
+    <value>Gérer les images</value>
+  </data>
   <data name="UI_Choice_Exit" xml:space="preserve">
     <value>Quitter</value>
   </data>

@@ -87,4 +87,28 @@
   <data name="Table_Unit_MB" xml:space="preserve">
     <value>Mo</value>
   </data>
+  <data name="Table_Header_Repository" xml:space="preserve">
+    <value>[yellow]Dépôt[/]</value>
+  </data>
+  <data name="Table_Header_Tag" xml:space="preserve">
+    <value>[yellow]Tag[/]</value>
+  </data>
+  <data name="Table_Header_ImageID" xml:space="preserve">
+    <value>[yellow]ID Image[/]</value>
+  </data>
+  <data name="Table_Property_ImageID" xml:space="preserve">
+    <value>ID Image</value>
+  </data>
+  <data name="Table_Property_Repository" xml:space="preserve">
+    <value>Dépôt</value>
+  </data>
+  <data name="Table_Property_Tag" xml:space="preserve">
+    <value>Tag</value>
+  </data>
+  <data name="Table_Property_Size" xml:space="preserve">
+    <value>Taille</value>
+  </data>
+  <data name="Table_Property_InUse" xml:space="preserve">
+    <value>En Cours</value>
+  </data>
 </root>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Image_Title_Management" xml:space="preserve">
+    <value>Gestion des Images</value>
+  </data>
+  <data name="Image_Title_Details" xml:space="preserve">
+    <value>Détails de l'Image</value>
+  </data>
+  <data name="Image_Status_Loading" xml:space="preserve">
+    <value>Chargement des images...</value>
+  </data>
+  <data name="Image_Status_Deleting" xml:space="preserve">
+    <value>Suppression de l'image...</value>
+  </data>
+  <data name="Image_Status_InUse" xml:space="preserve">
+    <value>En Cours</value>
+  </data>
+  <data name="Image_Status_NotInUse" xml:space="preserve">
+    <value>Non Utilisé</value>
+  </data>
+  <data name="Image_Error_NoImagesFound" xml:space="preserve">
+    <value>[red]Aucune image trouvée![/]</value>
+  </data>
+  <data name="Image_Error_InUse" xml:space="preserve">
+    <value>[red]Impossible de supprimer l'image: L'image est utilisée par un ou plusieurs conteneurs![/]</value>
+  </data>
+  <data name="Image_Error_FailedToDelete" xml:space="preserve">
+    <value>[red]Échec de la suppression de l'image: {0}[/]</value>
+  </data>
+  <data name="Image_Prompt_SelectImage" xml:space="preserve">
+    <value>[blue]Sélectionnez une image (utilisez les flèches):[/]</value>
+  </data>
+  <data name="Image_Prompt_Actions" xml:space="preserve">
+    <value>[yellow]Appuyez sur D (supprimer), C (détails), ou ESC (retour)[/]</value>
+  </data>
+  <data name="Image_Confirm_Delete" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir supprimer l'image '{0}'?</value>
+  </data>
+  <data name="Image_Success_Deleted" xml:space="preserve">
+    <value>[green]Image supprimée avec succès![/]</value>
+  </data>
+</root>
