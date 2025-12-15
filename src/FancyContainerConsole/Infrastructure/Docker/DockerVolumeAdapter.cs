@@ -19,23 +19,45 @@ public sealed class DockerVolumeAdapter : IVolumeRepository, IDisposable
 
     public async Task<IEnumerable<Volume>> GetVolumesAsync(CancellationToken cancellationToken = default)
     {
-        // Get all volumes with inspect to get usage data
+        // Get all volumes
         var parameters = new VolumesListParameters();
         var response = await _client.Volumes.ListAsync(parameters, cancellationToken);
 
-        // Inspect each volume to get usage data (size and RefCount)
+        // Get all containers to check which volumes are in use
+        var containersListParameters = new ContainersListParameters { All = true };
+        var containers = await _client.Containers.ListContainersAsync(containersListParameters, cancellationToken);
+
+        // Build a set of volumes that are in use
+        var volumesInUse = new HashSet<string>();
+        foreach (var container in containers)
+        {
+            if (container.Mounts != null)
+            {
+                foreach (var mount in container.Mounts)
+                {
+                    if (mount.Type == "volume" && !string.IsNullOrEmpty(mount.Name))
+                    {
+                        volumesInUse.Add(mount.Name);
+                    }
+                }
+            }
+        }
+
+        // Inspect each volume to get full data and check if in use
         var volumes = new List<Volume>();
         foreach (var vol in response.Volumes)
         {
             try
             {
                 var inspectedVolume = await _client.Volumes.InspectAsync(vol.Name, cancellationToken);
-                volumes.Add(DockerMapper.ToDomain(inspectedVolume));
+                var isInUse = volumesInUse.Contains(vol.Name);
+                volumes.Add(DockerMapper.ToDomain(inspectedVolume, isInUse));
             }
             catch
             {
                 // If inspection fails, use the basic volume data
-                volumes.Add(DockerMapper.ToDomain(vol));
+                var isInUse = volumesInUse.Contains(vol.Name);
+                volumes.Add(DockerMapper.ToDomain(vol, isInUse));
             }
         }
 
@@ -47,7 +69,16 @@ public sealed class DockerVolumeAdapter : IVolumeRepository, IDisposable
         try
         {
             var volume = await _client.Volumes.InspectAsync(name, cancellationToken);
-            return DockerMapper.ToDomain(volume);
+
+            // Check if volume is in use by any container
+            var containersListParameters = new ContainersListParameters { All = true };
+            var containers = await _client.Containers.ListContainersAsync(containersListParameters, cancellationToken);
+
+            var isInUse = containers.Any(c =>
+                c.Mounts != null &&
+                c.Mounts.Any(m => m.Type == "volume" && m.Name == name));
+
+            return DockerMapper.ToDomain(volume, isInUse);
         }
         catch
         {

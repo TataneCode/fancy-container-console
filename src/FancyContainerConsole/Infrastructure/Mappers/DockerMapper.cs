@@ -37,17 +37,30 @@ public static class DockerMapper
         return new Container(containerId, name, image, state, createdAt, ports, portMappings, networks, memoryUsage, volumes);
     }
 
-    public static Volume ToDomain(VolumeResponse dockerVolume)
+    public static Volume ToDomain(VolumeResponse dockerVolume, bool? isInUse = null)
     {
         ArgumentNullException.ThrowIfNull(dockerVolume);
 
         var volumeId = new VolumeId(dockerVolume.Name);
         var name = dockerVolume.Name;
-        var size = dockerVolume.UsageData?.Size ?? 0L;
-        var inUse = dockerVolume.UsageData?.RefCount > 0;
+
+        // Try to get size from UsageData
+        long size = dockerVolume.UsageData?.Size ?? 0L;
+
+        // Use provided isInUse value if available, otherwise try to get from UsageData
+        bool inUseValue;
+        if (isInUse.HasValue)
+        {
+            inUseValue = isInUse.Value;
+        }
+        else
+        {
+            inUseValue = dockerVolume.UsageData?.RefCount > 0;
+        }
+
         var createdAt = DateTime.TryParse(dockerVolume.CreatedAt, out var dt) ? dt : DateTime.MinValue;
 
-        return new Volume(volumeId, name, size, inUse, createdAt);
+        return new Volume(volumeId, name, size, inUseValue, createdAt);
     }
 
     private static Domain.Enums.ContainerState MapState(string state)
