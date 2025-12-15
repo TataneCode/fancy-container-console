@@ -38,19 +38,20 @@ public sealed class InteractiveContainerMenu
             DisplayHelper.DisplayContainers(containers);
 
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[yellow]Select a container or press ESC to return to main menu[/]");
 
-            var allChoices = new List<object>(containers);
-            allChoices.Add("[Back to Main Menu]");
+            var allChoices = new List<object> { "← Back to Main Menu" };
+            allChoices.AddRange(containers);
 
             var selectedOption = AnsiConsole.Prompt(
                 new SelectionPrompt<object>()
-                    .Title("[blue]Select a container:[/]")
+                    .Title("[blue]Select a container (use arrow keys):[/]")
                     .AddChoices(allChoices)
-                    .UseConverter(choice => choice is ContainerDto c ? $"{c.Name} ({c.State})" : choice.ToString()!)
+                    .UseConverter(choice => choice is ContainerDto c
+                        ? $"{Markup.Escape(c.Name)} ({Markup.Escape(c.State)})"
+                        : choice.ToString()!)
             );
 
-            if (selectedOption is string && selectedOption.ToString() == "[Back to Main Menu]")
+            if (selectedOption is string)
             {
                 return;
             }

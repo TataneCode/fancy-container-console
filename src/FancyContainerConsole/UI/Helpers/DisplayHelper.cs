@@ -25,7 +25,7 @@ public static class DisplayHelper
         table.AddColumn("[yellow]State[/]");
         table.AddColumn("[yellow]Networks[/]");
         table.AddColumn("[yellow]Ports[/]");
-        table.AddColumn("[yellow]RAM (MB)[/]");
+        table.AddColumn("[yellow]Size (MB)[/]");
 
         foreach (var container in containers)
         {
@@ -40,7 +40,7 @@ public static class DisplayHelper
                 ? string.Join(", ", container.PortMappings.Select(p => $"{p.PublicPort}:{p.PrivatePort}"))
                 : "N/A";
 
-            var ramMb = container.MemoryUsage / 1024 / 1024;
+            var sizeMb = container.MemoryUsage / 1024 / 1024;
 
             table.AddRow(
                 container.Name,
@@ -49,7 +49,7 @@ public static class DisplayHelper
                 $"[{stateColor}]{container.State}[/]",
                 networks,
                 ports,
-                ramMb.ToString()
+                sizeMb.ToString()
             );
         }
 
@@ -58,7 +58,10 @@ public static class DisplayHelper
 
     public static void DisplayLogs(string logs)
     {
-        var panel = new Panel(logs)
+        // Escape markup to prevent Spectre.Console from parsing ANSI codes as markup
+        var escapedLogs = Markup.Escape(logs);
+
+        var panel = new Panel(escapedLogs)
         {
             Header = new PanelHeader("[yellow]Container Logs[/]"),
             Border = BoxBorder.Rounded,
@@ -130,8 +133,8 @@ public static class DisplayHelper
             : "N/A";
         table.AddRow("Port Mappings", ports);
 
-        var ramMb = container.MemoryUsage / 1024 / 1024;
-        table.AddRow("Memory Usage", $"{ramMb} MB");
+        var sizeMb = container.MemoryUsage / 1024 / 1024;
+        table.AddRow("Disk Size", $"{sizeMb} MB");
 
         var volumes = container.Volumes.Any()
             ? string.Join("\n", container.Volumes)

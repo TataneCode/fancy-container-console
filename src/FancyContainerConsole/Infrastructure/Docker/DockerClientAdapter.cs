@@ -20,7 +20,7 @@ public sealed class DockerClientAdapter : IContainerRepository, IDisposable
 
     public async Task<IEnumerable<Container>> GetContainersAsync(CancellationToken cancellationToken = default)
     {
-        var parameters = new ContainersListParameters { All = true };
+        var parameters = new ContainersListParameters { All = true, Size = true };
         var containers = await _client.Containers.ListContainersAsync(parameters, cancellationToken);
         return containers.Select(DockerMapper.ToDomain);
     }

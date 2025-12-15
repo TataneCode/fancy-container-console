@@ -81,13 +81,24 @@ public sealed class MainMenu
             return;
         }
 
-        var selectedContainer = AnsiConsole.Prompt(
-            new SelectionPrompt<ContainerDto>()
-                .Title("[blue]Select a container:[/]")
-                .AddChoices(containers)
-                .UseConverter(c => $"{c.Name} ({c.State})")
+        var allChoices = new List<object> { "← Back to Main Menu" };
+        allChoices.AddRange(containers);
+
+        var selectedOption = AnsiConsole.Prompt(
+            new SelectionPrompt<object>()
+                .Title("[blue]Select a container (use arrow keys):[/]")
+                .AddChoices(allChoices)
+                .UseConverter(choice => choice is ContainerDto c
+                    ? $"{Markup.Escape(c.Name)} ({Markup.Escape(c.State)})"
+                    : choice.ToString()!)
         );
 
+        if (selectedOption is string)
+        {
+            return;
+        }
+
+        var selectedContainer = (ContainerDto)selectedOption;
         await ShowContainerActionsAsync(selectedContainer);
     }
 
@@ -106,15 +117,17 @@ public sealed class MainMenu
                 new SelectionPrompt<string>()
                     .Title("[blue]What would you like to do?[/]")
                     .AddChoices(
+                        "← Back to main menu",
                         "View logs",
                         "Start container",
                         "Stop container",
-                        "Delete container",
-                        "Back to main menu"
+                        "Delete container"
                     ));
 
             switch (action)
             {
+                case "← Back to main menu":
+                    return;
                 case "View logs":
                     await ViewLogsAsync(container.Id);
                     break;
@@ -131,8 +144,6 @@ public sealed class MainMenu
                         return;
                     }
                     break;
-                case "Back to main menu":
-                    return;
             }
         }
     }

@@ -38,19 +38,20 @@ public sealed class VolumeMenu
             DisplayHelper.DisplayVolumes(volumes);
 
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[yellow]Select a volume or press ESC to return to main menu[/]");
 
-            var allChoices = new List<object>(volumes);
-            allChoices.Add("[Back to Main Menu]");
+            var allChoices = new List<object> { "← Back to Main Menu" };
+            allChoices.AddRange(volumes);
 
             var selectedOption = AnsiConsole.Prompt(
                 new SelectionPrompt<object>()
-                    .Title("[blue]Select a volume:[/]")
+                    .Title("[blue]Select a volume (use arrow keys):[/]")
                     .AddChoices(allChoices)
-                    .UseConverter(choice => choice is VolumeDto v ? $"{v.Name} ({(v.InUse ? "In use" : "Not in use")})" : choice.ToString()!)
+                    .UseConverter(choice => choice is VolumeDto v
+                        ? $"{Markup.Escape(v.Name)} ({(v.InUse ? "In use" : "Not in use")})"
+                        : choice.ToString()!)
             );
 
-            if (selectedOption is string && selectedOption.ToString() == "[Back to Main Menu]")
+            if (selectedOption is string)
             {
                 return;
             }

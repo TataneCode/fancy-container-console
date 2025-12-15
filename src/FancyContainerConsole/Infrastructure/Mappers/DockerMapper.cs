@@ -27,7 +27,8 @@ public static class DockerMapper
             .Select(n => new NetworkInfo(n.Key, n.Value.IPAddress ?? "N/A"))
             .ToList() ?? new List<NetworkInfo>();
 
-        var memoryUsage = dockerContainer.SizeRw;
+        // SizeRootFs is the total filesystem size (in bytes)
+        var memoryUsage = dockerContainer.SizeRootFs;
 
         var volumes = dockerContainer.Mounts?
             .Select(m => m.Name ?? m.Source ?? "Unknown")
@@ -42,7 +43,7 @@ public static class DockerMapper
 
         var volumeId = new VolumeId(dockerVolume.Name);
         var name = dockerVolume.Name;
-        var size = 0L; // Docker API doesn't provide direct size in list; needs inspection
+        var size = dockerVolume.UsageData?.Size ?? 0L;
         var inUse = dockerVolume.UsageData?.RefCount > 0;
         var createdAt = DateTime.TryParse(dockerVolume.CreatedAt, out var dt) ? dt : DateTime.MinValue;
 
