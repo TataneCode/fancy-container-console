@@ -10,6 +10,8 @@ var services = new ServiceCollection();
 
 services.AddSingleton<IContainerRepository, DockerClientAdapter>();
 services.AddSingleton<IContainerService, ContainerService>();
+services.AddSingleton<IVolumeRepository, DockerVolumeAdapter>();
+services.AddSingleton<IVolumeService, VolumeService>();
 services.AddSingleton<MainMenu>();
 
 services.AddLogging(builder =>

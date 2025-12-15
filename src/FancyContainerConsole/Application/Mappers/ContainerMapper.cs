@@ -9,13 +9,25 @@ public static class ContainerMapper
     {
         ArgumentNullException.ThrowIfNull(container);
 
+        var portMappings = container.PortMappings
+            .Select(pm => new PortMappingDto(pm.PrivatePort, pm.PublicPort, pm.Type))
+            .ToList();
+
+        var networks = container.Networks
+            .Select(n => new NetworkInfoDto(n.Name, n.IpAddress))
+            .ToList();
+
         return new ContainerDto(
             container.Id.Value,
             container.Name,
             container.Image,
             container.State.ToString(),
             container.CreatedAt,
-            container.Ports
+            container.Ports,
+            portMappings,
+            networks,
+            container.MemoryUsage,
+            container.Volumes
         );
     }
 

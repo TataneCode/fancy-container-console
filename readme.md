@@ -22,3 +22,24 @@ The UI will be provided with spectre.console.
 - select a container among the list
 - display logs of the container
 - start / stop / delete container
+
+## MVP 2
+- Add details to dashboard "all docker container" :
+    - Related network
+    - internal to external ports mapping
+    - Used RAM
+- Unify actions from dashboard
+    - Select a container directly from the "all docker container view"
+    - Display logs (press "l" key)
+    - Start / stop container (press "s" key)
+    - delete container (press "d" key, prompt confirmation message)
+    - Add a display view (press "c" key)
+        - Display docker image which is running
+        - Display related volume
+        - Display volume size
+- Add a "volumes list" view
+    - Dashboard with :
+        - Volume name
+        - Size
+        - In use
+    - Possibility do delete the volume if not in use (press "d" key, prompt confirmation message)

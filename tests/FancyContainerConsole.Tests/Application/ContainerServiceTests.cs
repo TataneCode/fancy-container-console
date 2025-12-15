@@ -24,8 +24,8 @@ public class ContainerServiceTests
     {
         var containers = new List<Container>
         {
-            new(new ContainerId("1"), "container1", "image1", ContainerState.Running, DateTime.UtcNow, Array.Empty<int>()),
-            new(new ContainerId("2"), "container2", "image2", ContainerState.Stopped, DateTime.UtcNow, Array.Empty<int>())
+            new(new ContainerId("1"), "container1", "image1", ContainerState.Running, DateTime.UtcNow, Array.Empty<int>(), Array.Empty<PortMapping>(), Array.Empty<NetworkInfo>(), 0L, Array.Empty<string>()),
+            new(new ContainerId("2"), "container2", "image2", ContainerState.Stopped, DateTime.UtcNow, Array.Empty<int>(), Array.Empty<PortMapping>(), Array.Empty<NetworkInfo>(), 0L, Array.Empty<string>())
         };
 
         _containerRepositoryMock.Setup(x => x.GetContainersAsync(It.IsAny<CancellationToken>()))

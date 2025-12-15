@@ -16,8 +16,12 @@ public class ContainerTests
         var state = ContainerState.Running;
         var createdAt = DateTime.UtcNow;
         var ports = new List<int> { 80, 443 };
+        var portMappings = new List<PortMapping> { new PortMapping(80, 8080, "tcp") };
+        var networks = new List<NetworkInfo> { new NetworkInfo("bridge", "172.17.0.2") };
+        var memoryUsage = 1024L;
+        var volumes = new List<string> { "vol1" };
 
-        var container = new Container(id, name, image, state, createdAt, ports);
+        var container = new Container(id, name, image, state, createdAt, ports, portMappings, networks, memoryUsage, volumes);
 
         container.Id.Should().Be(id);
         container.Name.Should().Be(name);
@@ -36,7 +40,11 @@ public class ContainerTests
             "image",
             ContainerState.Running,
             DateTime.UtcNow,
-            Array.Empty<int>()
+            Array.Empty<int>(),
+            Array.Empty<PortMapping>(),
+            Array.Empty<NetworkInfo>(),
+            0L,
+            Array.Empty<string>()
         );
 
         action.Should().Throw<ArgumentNullException>();
@@ -92,7 +100,11 @@ public class ContainerTests
             "nginx:latest",
             state,
             DateTime.UtcNow,
-            Array.Empty<int>()
+            Array.Empty<int>(),
+            Array.Empty<PortMapping>(),
+            Array.Empty<NetworkInfo>(),
+            0L,
+            Array.Empty<string>()
         );
     }
 }

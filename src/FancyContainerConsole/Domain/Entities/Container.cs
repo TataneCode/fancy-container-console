@@ -11,6 +11,10 @@ public sealed class Container
     public ContainerState State { get; }
     public DateTime CreatedAt { get; }
     public IReadOnlyList<int> Ports { get; }
+    public IReadOnlyList<PortMapping> PortMappings { get; }
+    public IReadOnlyList<NetworkInfo> Networks { get; }
+    public long MemoryUsage { get; }
+    public IReadOnlyList<string> Volumes { get; }
 
     public Container(
         ContainerId id,
@@ -18,7 +22,11 @@ public sealed class Container
         string image,
         ContainerState state,
         DateTime createdAt,
-        IReadOnlyList<int> ports)
+        IReadOnlyList<int> ports,
+        IReadOnlyList<PortMapping> portMappings,
+        IReadOnlyList<NetworkInfo> networks,
+        long memoryUsage,
+        IReadOnlyList<string> volumes)
     {
         Id = id ?? throw new ArgumentNullException(nameof(id));
         Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -26,6 +34,10 @@ public sealed class Container
         State = state;
         CreatedAt = createdAt;
         Ports = ports ?? Array.Empty<int>();
+        PortMappings = portMappings ?? Array.Empty<PortMapping>();
+        Networks = networks ?? Array.Empty<NetworkInfo>();
+        MemoryUsage = memoryUsage;
+        Volumes = volumes ?? Array.Empty<string>();
     }
 
     public bool IsRunning() => State == ContainerState.Running;

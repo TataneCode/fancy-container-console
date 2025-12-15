@@ -17,7 +17,11 @@ public class ContainerMapperTests
             "nginx:latest",
             ContainerState.Running,
             new DateTime(2024, 1, 1, 12, 0, 0),
-            new List<int> { 80, 443 }
+            new List<int> { 80, 443 },
+            Array.Empty<PortMapping>(),
+            Array.Empty<NetworkInfo>(),
+            0L,
+            Array.Empty<string>()
         );
 
         var dto = ContainerMapper.ToDto(container);
@@ -44,8 +48,8 @@ public class ContainerMapperTests
     {
         var containers = new List<Container>
         {
-            new(new ContainerId("1"), "container1", "image1", ContainerState.Running, DateTime.UtcNow, Array.Empty<int>()),
-            new(new ContainerId("2"), "container2", "image2", ContainerState.Stopped, DateTime.UtcNow, Array.Empty<int>())
+            new(new ContainerId("1"), "container1", "image1", ContainerState.Running, DateTime.UtcNow, Array.Empty<int>(), Array.Empty<PortMapping>(), Array.Empty<NetworkInfo>(), 0L, Array.Empty<string>()),
+            new(new ContainerId("2"), "container2", "image2", ContainerState.Stopped, DateTime.UtcNow, Array.Empty<int>(), Array.Empty<PortMapping>(), Array.Empty<NetworkInfo>(), 0L, Array.Empty<string>())
         };
 
         var dtos = ContainerMapper.ToDto(containers).ToList();

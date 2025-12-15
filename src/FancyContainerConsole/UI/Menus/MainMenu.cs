@@ -8,10 +8,12 @@ namespace FancyContainerConsole.UI.Menus;
 public sealed class MainMenu
 {
     private readonly IContainerService _containerService;
+    private readonly IVolumeService _volumeService;
 
-    public MainMenu(IContainerService containerService)
+    public MainMenu(IContainerService containerService, IVolumeService volumeService)
     {
         _containerService = containerService ?? throw new ArgumentNullException(nameof(containerService));
+        _volumeService = volumeService ?? throw new ArgumentNullException(nameof(volumeService));
     }
 
     public async Task ShowAsync()
@@ -24,18 +26,22 @@ public sealed class MainMenu
                 new SelectionPrompt<string>()
                     .Title("[blue]What would you like to do?[/]")
                     .AddChoices(
-                        "List all containers",
+                        "Interactive Container Dashboard",
                         "Manage container",
+                        "Manage volumes",
                         "Exit"
                     ));
 
             switch (choice)
             {
-                case "List all containers":
-                    await ShowContainersAsync();
+                case "Interactive Container Dashboard":
+                    await ShowInteractiveContainerDashboardAsync();
                     break;
                 case "Manage container":
                     await ManageContainerAsync();
+                    break;
+                case "Manage volumes":
+                    await ManageVolumesAsync();
                     break;
                 case "Exit":
                     AnsiConsole.MarkupLine("[blue]Goodbye![/]");
@@ -44,32 +50,16 @@ public sealed class MainMenu
         }
     }
 
-    private async Task ShowContainersAsync()
+    private async Task ShowInteractiveContainerDashboardAsync()
     {
-        DisplayHelper.DisplayTitle("All Containers");
+        var interactiveMenu = new InteractiveContainerMenu(_containerService);
+        await interactiveMenu.ShowAsync();
+    }
 
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("[yellow]Loading containers...[/]", async ctx =>
-            {
-                var containers = await _containerService.GetAllContainersAsync();
-                var containersList = containers.ToList();
-
-                ctx.Status("[green]Displaying containers[/]");
-
-                if (!containersList.Any())
-                {
-                    AnsiConsole.MarkupLine("[yellow]No containers found.[/]");
-                }
-                else
-                {
-                    DisplayHelper.DisplayContainers(containersList);
-                }
-            });
-
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine("[grey]Press any key to continue...[/]");
-        Console.ReadKey(true);
+    private async Task ManageVolumesAsync()
+    {
+        var volumeMenu = new VolumeMenu(_volumeService);
+        await volumeMenu.ShowAsync();
     }
 
     private async Task ManageContainerAsync()

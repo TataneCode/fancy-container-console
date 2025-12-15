@@ -16,9 +16,37 @@ public static class DockerMapper
         var image = dockerContainer.Image ?? "Unknown";
         var state = MapState(dockerContainer.State);
         var createdAt = dockerContainer.Created;
-        var ports = dockerContainer.Ports?.Select(p => (int)p.PublicPort).ToList() ?? new List<int>();
+        var ports = dockerContainer.Ports?.Select(p => (int)p.PublicPort).Where(p => p > 0).ToList() ?? new List<int>();
 
-        return new Container(containerId, name, image, state, createdAt, ports);
+        var portMappings = dockerContainer.Ports?
+            .Where(p => p.PublicPort > 0)
+            .Select(p => new PortMapping((int)p.PrivatePort, (int)p.PublicPort, p.Type ?? "tcp"))
+            .ToList() ?? new List<PortMapping>();
+
+        var networks = dockerContainer.NetworkSettings?.Networks?
+            .Select(n => new NetworkInfo(n.Key, n.Value.IPAddress ?? "N/A"))
+            .ToList() ?? new List<NetworkInfo>();
+
+        var memoryUsage = dockerContainer.SizeRw;
+
+        var volumes = dockerContainer.Mounts?
+            .Select(m => m.Name ?? m.Source ?? "Unknown")
+            .ToList() ?? new List<string>();
+
+        return new Container(containerId, name, image, state, createdAt, ports, portMappings, networks, memoryUsage, volumes);
+    }
+
+    public static Volume ToDomain(VolumeResponse dockerVolume)
+    {
+        ArgumentNullException.ThrowIfNull(dockerVolume);
+
+        var volumeId = new VolumeId(dockerVolume.Name);
+        var name = dockerVolume.Name;
+        var size = 0L; // Docker API doesn't provide direct size in list; needs inspection
+        var inUse = dockerVolume.UsageData?.RefCount > 0;
+        var createdAt = DateTime.TryParse(dockerVolume.CreatedAt, out var dt) ? dt : DateTime.MinValue;
+
+        return new Volume(volumeId, name, size, inUse, createdAt);
     }
 
     private static Domain.Enums.ContainerState MapState(string state)

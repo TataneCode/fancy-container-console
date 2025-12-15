@@ -23,19 +23,33 @@ public static class DisplayHelper
         table.AddColumn("[yellow]ID[/]");
         table.AddColumn("[yellow]Image[/]");
         table.AddColumn("[yellow]State[/]");
-        table.AddColumn("[yellow]Created[/]");
+        table.AddColumn("[yellow]Networks[/]");
+        table.AddColumn("[yellow]Ports[/]");
+        table.AddColumn("[yellow]RAM (MB)[/]");
 
         foreach (var container in containers)
         {
             var stateColor = GetStateColor(container.State);
             var shortId = container.Id.Length > 12 ? container.Id[..12] : container.Id;
 
+            var networks = container.Networks.Any()
+                ? string.Join(", ", container.Networks.Select(n => n.Name))
+                : "N/A";
+
+            var ports = container.PortMappings.Any()
+                ? string.Join(", ", container.PortMappings.Select(p => $"{p.PublicPort}:{p.PrivatePort}"))
+                : "N/A";
+
+            var ramMb = container.MemoryUsage / 1024 / 1024;
+
             table.AddRow(
                 container.Name,
                 shortId,
                 container.Image,
                 $"[{stateColor}]{container.State}[/]",
-                container.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                networks,
+                ports,
+                ramMb.ToString()
             );
         }
 
@@ -62,6 +76,71 @@ public static class DisplayHelper
     public static void DisplayError(string message)
     {
         AnsiConsole.MarkupLine($"[red]✗ {message}[/]");
+    }
+
+    public static void DisplayVolumes(IEnumerable<VolumeDto> volumes)
+    {
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.AddColumn("[yellow]Name[/]");
+        table.AddColumn("[yellow]Size (MB)[/]");
+        table.AddColumn("[yellow]In Use[/]");
+        table.AddColumn("[yellow]Created[/]");
+
+        foreach (var volume in volumes)
+        {
+            var inUseColor = volume.InUse ? "green" : "grey";
+            var inUseText = volume.InUse ? "Yes" : "No";
+            var sizeMb = volume.Size / 1024 / 1024;
+
+            table.AddRow(
+                volume.Name,
+                sizeMb.ToString(),
+                $"[{inUseColor}]{inUseText}[/]",
+                volume.CreatedAt != DateTime.MinValue
+                    ? volume.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    : "N/A"
+            );
+        }
+
+        AnsiConsole.Write(table);
+    }
+
+    public static void DisplayContainerDetails(ContainerDto container)
+    {
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.AddColumn("[yellow]Property[/]");
+        table.AddColumn("[blue]Value[/]");
+
+        table.AddRow("ID", container.Id);
+        table.AddRow("Name", container.Name);
+        table.AddRow("Image", container.Image);
+
+        var stateColor = GetStateColor(container.State);
+        table.AddRow("State", $"[{stateColor}]{container.State}[/]");
+
+        var networks = container.Networks.Any()
+            ? string.Join(", ", container.Networks.Select(n => $"{n.Name} ({n.IpAddress})"))
+            : "N/A";
+        table.AddRow("Networks", networks);
+
+        var ports = container.PortMappings.Any()
+            ? string.Join("\n", container.PortMappings.Select(p => $"{p.PublicPort}:{p.PrivatePort}/{p.Type}"))
+            : "N/A";
+        table.AddRow("Port Mappings", ports);
+
+        var ramMb = container.MemoryUsage / 1024 / 1024;
+        table.AddRow("Memory Usage", $"{ramMb} MB");
+
+        var volumes = container.Volumes.Any()
+            ? string.Join("\n", container.Volumes)
+            : "N/A";
+        table.AddRow("Volumes", volumes);
+
+        table.AddRow("Created", container.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"));
+
+        AnsiConsole.Write(table);
     }
 
     private static string GetStateColor(string state)
