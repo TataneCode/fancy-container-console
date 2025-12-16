@@ -1,0 +1,115 @@
+name: Release - Publish Executables
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish-executables:
+    name: Build and Publish Executables
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        dotnet-quality: 'preview'
+
+    - name: Extract version from tag
+      id: get_version
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION=${{ github.event.release.tag_name }}
+          VERSION=${VERSION#v}
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+
+    - name: Restore dependencies
+      run: dotnet restore src/FancyContainerConsole/FancyContainerConsole.csproj
+
+    - name: Build for Windows x64
+      run: |
+        dotnet publish src/FancyContainerConsole/FancyContainerConsole.csproj \
+          -c Release \
+          -r win-x64 \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:Version=${{ steps.get_version.outputs.VERSION }} \
+          -o dist/win-x64
+
+    - name: Build for Linux x64
+      run: |
+        dotnet publish src/FancyContainerConsole/FancyContainerConsole.csproj \
+          -c Release \
+          -r linux-x64 \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -p:IncludeNativeLibrariesForSelfExtract=true \
+          -p:Version=${{ steps.get_version.outputs.VERSION }} \
+          -o dist/linux-x64
+
+    - name: Create archives
+      run: |
+        cd dist/win-x64
+        zip -r ../../FancyContainerConsole-win-x64.zip .
+        cd ../linux-x64
+        tar -czf ../../FancyContainerConsole-linux-x64.tar.gz .
+        cd ../..
+
+    - name: Generate checksums
+      run: |
+        sha256sum FancyContainerConsole-win-x64.zip > checksums.txt
+        sha256sum FancyContainerConsole-linux-x64.tar.gz >> checksums.txt
+        cat checksums.txt
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          FancyContainerConsole-win-x64.zip
+          FancyContainerConsole-linux-x64.tar.gz
+          checksums.txt
+        fail_on_unmatched_files: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload artifacts (for non-tag pushes)
+      if: "!startsWith(github.ref, 'refs/tags/')"
+      uses: actions/upload-artifact@v4
+      with:
+        name: executables
+        path: |
+          FancyContainerConsole-win-x64.zip
+          FancyContainerConsole-linux-x64.tar.gz
+          checksums.txt
+        retention-days: 30
+
+    - name: Build Summary
+      if: always()
+      run: |
+        echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Version: ${{ steps.get_version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Artifacts Created:" >> $GITHUB_STEP_SUMMARY
+        echo "- FancyContainerConsole-win-x64.zip" >> $GITHUB_STEP_SUMMARY
+        echo "- FancyContainerConsole-linux-x64.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Checksums:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat checksums.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY

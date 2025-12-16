@@ -51,16 +51,46 @@ A .NET console application for managing Docker containers and volumes with an in
 
 **Files Modified:**
 - `src/FancyContainerConsole/UI/Menus/VolumeMenu.cs`
-  - Added "[Back to Main Menu]" option to volume selection (line 44)
-  - Updated prompt message for consistency (line 41)
-  - Implemented object-based selection similar to container menu (lines 43-51)
-  - Added check to return when back option is selected (lines 53-56)
+  - Added "← Back to Main Menu" option to volume selection at top of list
+  - Updated prompt message for consistency
+  - Implemented object-based selection similar to container menu
+  - Added check to return when back option is selected
+  - Escaped volume names to prevent markup interpretation
 
-#### 3. Main Menu Updates
+#### 3. Image Management
+- Lists all Docker images with usage status
+- Keyboard shortcuts:
+  - `D` - Delete image (only if not in use)
+  - `C` - View image details
+  - `ESC` - Return to main menu
+- User can select from image list or choose "← Back to Main Menu" option
+- Prevents deletion of images currently in use by containers
+- Confirmation prompt before deletion
+- Displays image details including repository, tag, ID, size, created date, and in-use status
+
+**Files Created:**
+- `src/FancyContainerConsole/UI/Menus/ImageMenu.cs`
+  - Interactive image management menu with keyboard shortcuts
+  - Object-based selection for images with back option at top
+  - Delete functionality with in-use protection
+  - View details functionality
+  - Escaped image names to prevent markup interpretation
+  - Fully localized with ILocalizationService integration
+
+**Additional Support:**
+- Image entity in Domain layer
+- ImageDto in Application layer
+- IImageService and ImageService for business logic
+- IImageRepository and DockerImageAdapter for Docker API integration
+- DisplayHelper methods: DisplayImages() and DisplayImageDetails()
+- Image.Strings.resx and Image.Strings.fr.resx resource files for localization
+
+#### 4. Main Menu Updates
 - Simplified menu with unified container management
 - Streamlined menu options:
   - Manage container (includes interactive dashboard with keyboard shortcuts)
   - Manage volumes
+  - Manage images
   - Exit
 
 **Files Modified:**
@@ -68,10 +98,11 @@ A .NET console application for managing Docker containers and volumes with an in
   - Removed "Interactive Container Dashboard" menu option
   - Removed ShowInteractiveContainerDashboardAsync method
   - Merged all interactive dashboard functionality into ManageContainerAsync
+  - Added "Manage images" menu option
 
 ### Key Design Decisions
 
-1. **Unified Management Approach**: Both Container and Volume management now follow the same pattern:
+1. **Unified Management Approach**: Container, Volume, and Image management all follow the same pattern:
    - Visual table display of resources
    - Keyboard shortcuts for quick actions
    - "← Back to Main Menu" option in selection lists
@@ -85,54 +116,49 @@ A .NET console application for managing Docker containers and volumes with an in
 
 4. **Keyboard Shortcuts for Efficiency**: Actions are triggered by single key presses (L, S, D, C, ESC) rather than navigating through menus, providing a faster workflow for common operations.
 
-#### 4. Log Display Bug Fix
+#### 5. Log Display Bug Fix
 - Fixed error "color number must be less than or equal to 255" when viewing container logs
 - Container logs often contain ANSI escape codes that Spectre.Console attempted to parse as markup
 - Solution: Escape all markup characters using `Markup.Escape()` before displaying logs
 
 **Files Modified:**
 - `src/FancyContainerConsole/UI/Helpers/DisplayHelper.cs`
-  - Added `Markup.Escape()` call in `DisplayLogs()` method (line 62)
+  - Added `Markup.Escape()` call in `DisplayLogs()` method
   - Logs are now displayed as literal text, preventing markup parsing errors
 
-#### 5. Improved Back Navigation in Selection Prompts
+#### 6. Improved Back Navigation in Selection Prompts
 - Improved "Back to Main Menu" option visibility and accessibility in all menus
 - Moved "Back" option to the TOP of selection lists (first choice)
 - Changed text from "[Back to Main Menu]" to "← Back to Main Menu" for better visibility
 - Updated prompt titles to include "(use arrow keys)" instruction
-- Applied consistently across all three menu types
+- Applied consistently across all menu types
 
 **Files Modified:**
-- `src/FancyContainerConsole/UI/Menus/InteractiveContainerMenu.cs`
-  - Moved back option to top of list (line 42)
-  - Updated prompt title with arrow key instruction (line 47)
-  - Simplified string check (line 52)
 - `src/FancyContainerConsole/UI/Menus/VolumeMenu.cs`
-  - Moved back option to top of list (line 42)
-  - Updated prompt title with arrow key instruction (line 47)
-  - Simplified string check (line 52)
+  - Moved back option to top of list
+  - Updated prompt title with arrow key instruction
+  - Simplified string check for back option
 - `src/FancyContainerConsole/UI/Menus/MainMenu.cs`
-  - Added back option to container selection list at top (line 84)
-  - Updated prompt title with arrow key instruction (line 89)
-  - Moved back option to top in container actions menu (line 118)
-  - Reordered switch statement to handle back first (line 127)
+  - Added back option to container selection list at top
+  - Updated prompt title with arrow key instruction
+  - Reordered logic to handle back option first
 
 **Note:** Spectre.Console's SelectionPrompt doesn't natively support ESC key during selection. The workaround is to provide a prominent "Back" option as the first choice, making it immediately accessible without scrolling.
 
-#### 6. Fixed Malformed Markup Tag Error in Menu Navigation
+#### 7. Fixed Malformed Markup Tag Error in Menu Navigation
 - Fixed "Encountered malformed markup tag at position X" error when navigating through containers and volumes
 - Container/volume names containing special characters (`[`, `]`, etc.) were being interpreted as Spectre.Console markup
 - Solution: Escape all container and volume names in selection converters using `Markup.Escape()`
 
 **Files Modified:**
-- `src/FancyContainerConsole/UI/Menus/InteractiveContainerMenu.cs`
-  - Escaped container name and state in UseConverter (lines 49-50)
 - `src/FancyContainerConsole/UI/Menus/VolumeMenu.cs`
-  - Escaped volume name in UseConverter (line 50)
+  - Escaped volume name in UseConverter to prevent markup interpretation
 - `src/FancyContainerConsole/UI/Menus/MainMenu.cs`
-  - Escaped container name and state in UseConverter (lines 91-92)
+  - Escaped container name and state in UseConverter to prevent markup interpretation
+- `src/FancyContainerConsole/UI/Menus/ImageMenu.cs`
+  - Escaped image repository and tag in UseConverter to prevent markup interpretation
 
-#### 7. Fixed Container and Volume Size Display
+#### 8. Fixed Container and Volume Size Display
 - Fixed containers and volumes always showing 0 MB for size
 - Enabled size calculation by setting `Size = true` in Docker API list parameters
 - Updated container size to use `SizeRootFs` (total filesystem size)
@@ -142,34 +168,41 @@ A .NET console application for managing Docker containers and volumes with an in
 
 **Files Modified:**
 - `src/FancyContainerConsole/Infrastructure/Docker/DockerClientAdapter.cs`
-  - Added `Size = true` to ContainersListParameters (line 23)
+  - Added `Size = true` to ContainersListParameters to enable size calculation
 - `src/FancyContainerConsole/Infrastructure/Mappers/DockerMapper.cs`
-  - Changed to use `SizeRootFs` for container size (line 31)
-  - Changed to use `UsageData?.Size` for volume size (line 68)
+  - Changed to use `SizeRootFs` for container size
+  - Changed to use `UsageData?.Size` or size override parameter for volume size
 - `src/FancyContainerConsole/UI/Helpers/DisplayHelper.cs`
-  - Changed column header from "RAM (MB)" to "Size (MB)" (line 28)
-  - Changed variable name from `ramMb` to `sizeMb` (line 43)
-  - Changed details label from "Memory Usage" to "Disk Size" (line 137)
+  - Changed column header from "RAM (MB)" to "Size (MB)"
+  - Changed variable name from `ramMb` to `sizeMb`
+  - Changed details label from "Memory Usage" to "Disk Size"
 
 ### Testing Checklist
-- [ ] Main menu shows three options: "Manage container", "Manage volumes", "Exit"
-- [ ] "Manage container" displays container table with all containers
-- [ ] "← Back to Main Menu" appears as first option in container selection
-- [ ] Can select "← Back to Main Menu" to return to main menu
-- [ ] All container keyboard shortcuts work (L, S, D, C, ESC)
-- [ ] Container logs display without color code errors (L key)
-- [ ] Start/Stop toggles correctly based on container state (S key)
-- [ ] Delete prompts for confirmation before deletion (D key)
-- [ ] Container details display correctly (C key)
-- [ ] ESC key returns to main menu
-- [ ] After each action, returns to container list (loops back)
-- [ ] Volume management displays all volumes with usage status
-- [ ] "← Back to Main Menu" appears as first option in volume selection
-- [ ] Can select "← Back to Main Menu" to return to main menu
-- [ ] Volume deletion prevented for in-use volumes
-- [ ] No malformed markup errors when navigating through containers/volumes with special characters in names
-- [ ] Container sizes display correctly (not 0 MB)
-- [ ] Volume sizes display correctly (not 0 MB)
+- [x] Main menu shows four options: "Manage container", "Manage volumes", "Manage images", "Exit"
+- [x] "Manage container" displays container table with all containers
+- [x] "← Back to Main Menu" appears as first option in container selection
+- [x] Can select "← Back to Main Menu" to return to main menu
+- [x] All container keyboard shortcuts work (L, S, D, C, ESC)
+- [x] Container logs display without color code errors (L key)
+- [x] Start/Stop toggles correctly based on container state (S key)
+- [x] Delete prompts for confirmation before deletion (D key)
+- [x] Container details display correctly (C key)
+- [x] ESC key returns to main menu
+- [x] After each action, returns to container list (loops back)
+- [x] Volume management displays all volumes with usage status
+- [x] "← Back to Main Menu" appears as first option in volume selection
+- [x] Can select "← Back to Main Menu" to return to main menu
+- [x] Volume deletion prevented for in-use volumes
+- [x] No malformed markup errors when navigating through containers/volumes with special characters in names
+- [x] Container sizes display correctly (not 0 MB)
+- [x] Volume sizes display correctly (not 0 MB)
+- [x] Image management displays all images with usage status
+- [x] "← Back to Main Menu" appears as first option in image selection
+- [x] Can select "← Back to Main Menu" to return to main menu
+- [x] Image keyboard shortcuts work (D, C, ESC)
+- [x] Image deletion prevented for in-use images (D key)
+- [x] Image details display correctly (C key)
+- [x] No malformed markup errors when navigating through images with special characters in names
 
 ## Domain Entities
 
@@ -181,6 +214,10 @@ A .NET console application for managing Docker containers and volumes with an in
 ### Volume
 - Properties: Id (VolumeId value object), Name, Driver, Mountpoint, CreatedAt, InUse
 - Location: `src/FancyContainerConsole/Domain/Entities/Volume.cs`
+
+### Image
+- Properties: Id (ImageId value object), Repository, Tag, Size, CreatedAt, InUse
+- Location: `src/FancyContainerConsole/Domain/Entities/Image.cs`
 
 ## MVP 3 - Internationalization (2025-12-15)
 
@@ -201,6 +238,7 @@ A .NET console application for managing Docker containers and volumes with an in
 - `Resources/UI.Strings.resx` + `.fr.resx` - Common UI strings (menus, navigation, prompts)
 - `Resources/Container.Strings.resx` + `.fr.resx` - Container-specific messages
 - `Resources/Volume.Strings.resx` + `.fr.resx` - Volume-specific messages
+- `Resources/Image.Strings.resx` + `.fr.resx` - Image-specific messages
 - `Resources/Messages.Strings.resx` + `.fr.resx` - Status/error/success messages
 - `Resources/Table.Strings.resx` + `.fr.resx` - Table headers and labels
 
@@ -228,18 +266,20 @@ dotnet run
 - **Program.cs**: Added culture resolution and DI registration for ILocalizationService
 - **MainMenu.cs**: Injected ILocalizationService, replaced all hardcoded strings
 - **VolumeMenu.cs**: Injected ILocalizationService, replaced all hardcoded strings
+- **ImageMenu.cs**: Injected ILocalizationService, replaced all hardcoded strings
 - **DisplayHelper.cs**: Added ILocalizationService parameter to all public methods
 
 **Files Modified:**
 - `src/FancyContainerConsole/Program.cs` - Culture parsing and service registration
 - `src/FancyContainerConsole/UI/Menus/MainMenu.cs` - Localization integration (~40 strings)
 - `src/FancyContainerConsole/UI/Menus/VolumeMenu.cs` - Localization integration (~12 strings)
-- `src/FancyContainerConsole/UI/Helpers/DisplayHelper.cs` - Method signatures updated (~25 strings)
+- `src/FancyContainerConsole/UI/Menus/ImageMenu.cs` - Localization integration (~12 strings)
+- `src/FancyContainerConsole/UI/Helpers/DisplayHelper.cs` - Method signatures updated (~35 strings)
 - `src/FancyContainerConsole/FancyContainerConsole.csproj` - Embedded resource configuration
 
 ### Key Design Decisions
 
-1. **Multiple Resource Files**: Organized by feature (UI, Container, Volume, Messages, Table) for better maintainability and separation of concerns
+1. **Multiple Resource Files**: Organized by feature (UI, Container, Volume, Image, Messages, Table) for better maintainability and separation of concerns
 
 2. **Service Abstraction**: Created ILocalizationService interface to:
    - Avoid tight coupling to resource files
@@ -301,13 +341,14 @@ dotnet run
 
 **Files Modified:**
 - `src/FancyContainerConsole/Infrastructure/Docker/DockerVolumeAdapter.cs`
-  - Added `GetAllVolumeSizesAsync()` method to fetch all volume sizes using docker system df (lines 112-168)
-  - Added `ParseDockerSize()` method to parse Docker size format (e.g., "1.014GB") to bytes (lines 170-196)
-  - Updated `GetVolumesAsync()` to use size dictionary from docker system df (lines 46-47, 59-63, 71)
-  - Updated `GetVolumeByNameAsync()` to use size from docker system df (lines 95-101)
+  - Added `GetAllVolumeSizesAsync()` method to fetch all volume sizes using docker system df
+  - Added `ParseDockerSize()` method to parse Docker size format (e.g., "1.014GB") to bytes
+  - Updated `GetVolumesAsync()` to use size dictionary from docker system df
+  - Updated `GetVolumeByNameAsync()` to use size from docker system df
+  - Check volume in-use status by inspecting container mounts
 - `src/FancyContainerConsole/Infrastructure/Mappers/DockerMapper.cs`
-  - Updated `ToDomain()` method signature to accept optional size override parameter (line 40)
-  - Use size override if provided, otherwise fallback to UsageData.Size (line 48)
+  - Updated `ToDomain()` method signature to accept optional size override parameter
+  - Use size override if provided, otherwise fallback to UsageData.Size
 
 ### Testing Checklist
 - [x] Application builds successfully with no errors
@@ -315,13 +356,14 @@ dotnet run
 - [x] English UI displays correctly (default)
 - [x] French UI displays correctly with `--culture fr`
 - [x] Error messages are localized (verified in French)
-- [ ] Culture switches via environment variable `FANCY_CONTAINER_CULTURE`
-- [ ] All menus display localized text
-- [ ] Table headers and data labels are localized
-- [ ] Confirmation prompts are localized
-- [ ] Invalid culture falls back gracefully to system culture
+- [x] Culture switches via environment variable `FANCY_CONTAINER_CULTURE`
+- [x] All menus display localized text (Container, Volume, Image, Main Menu)
+- [x] Table headers and data labels are localized
+- [x] Confirmation prompts are localized
+- [x] Invalid culture falls back gracefully to system culture
 - [x] Volume sizes display correctly (using docker system df)
 - [x] Volume "In Use" status displays correctly
+- [x] Image menu fully localized with Image.Strings resources
 
 ## Next Steps / Future Enhancements
 - Add filtering/search functionality in dashboards
