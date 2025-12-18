@@ -222,4 +222,152 @@ public static class DisplayHelper
             _ => "white"
         };
     }
+
+    public static void RenderContainersTable(Table table, IList<ContainerDto> containers, int selectedIndex, ILocalizationService localization)
+    {
+        table.Border(TableBorder.Rounded);
+        table.AddColumn(localization.Get("Table_Header_ID"));
+        table.AddColumn(localization.Get("Table_Header_Name"));
+        table.AddColumn(localization.Get("Table_Header_Image"));
+        table.AddColumn(localization.Get("Table_Header_State"));
+        table.AddColumn(localization.Get("Table_Header_Networks"));
+        table.AddColumn(localization.Get("Table_Header_Ports"));
+        table.AddColumn(localization.Get("Table_Header_Size"));
+
+        for (int i = 0; i < containers.Count; i++)
+        {
+            var container = containers[i];
+            var stateColor = GetStateColor(container.State);
+            var shortId = container.Id.Length > 12 ? container.Id[..12] : container.Id;
+
+            var networks = container.Networks.Any()
+                ? string.Join(", ", container.Networks.Select(n => n.Name))
+                : localization.Get("Table_Value_NotAvailable");
+
+            var ports = container.PortMappings.Any()
+                ? string.Join(", ", container.PortMappings.Select(p => $"{p.PublicPort}:{p.PrivatePort}"))
+                : localization.Get("Table_Value_NotAvailable");
+
+            var sizeMb = container.MemoryUsage / 1024 / 1024;
+
+            // Prepend cursor to ID if selected
+            var idWithCursor = i == selectedIndex ? $"[yellow]>[/] {shortId}" : shortId;
+
+            // Prepare row content
+            var rowContent = new[]
+            {
+                idWithCursor,
+                container.Name,
+                container.Image,
+                $"[{stateColor}]{container.State}[/]",
+                networks,
+                ports,
+                sizeMb.ToString()
+            };
+
+            // Apply highlight if selected
+            if (i == selectedIndex)
+            {
+                var highlightedContent = rowContent.Select(c => $"[black on yellow]{c}[/]").ToArray();
+                table.AddRow(highlightedContent);
+            }
+            else
+            {
+                table.AddRow(rowContent);
+            }
+        }
+    }
+
+    public static void RenderVolumesTable(Table table, IList<VolumeDto> volumes, int selectedIndex, ILocalizationService localization)
+    {
+        table.Border(TableBorder.Rounded);
+        table.AddColumn(localization.Get("Table_Header_Name"));
+        table.AddColumn(localization.Get("Table_Header_Size"));
+        table.AddColumn(localization.Get("Table_Header_InUse"));
+        table.AddColumn(localization.Get("Table_Header_Created"));
+
+        for (int i = 0; i < volumes.Count; i++)
+        {
+            var volume = volumes[i];
+            var inUseColor = volume.InUse ? "green" : "grey";
+            var inUseText = volume.InUse
+                ? localization.Get("Table_Value_Yes")
+                : localization.Get("Table_Value_No");
+            var sizeMb = volume.Size / 1024 / 1024;
+
+            // Prepend cursor to Name if selected
+            var nameWithCursor = i == selectedIndex ? $"[yellow]>[/] {volume.Name}" : volume.Name;
+
+            // Prepare row content
+            var rowContent = new[]
+            {
+                nameWithCursor,
+                sizeMb.ToString(),
+                $"[{inUseColor}]{inUseText}[/]",
+                volume.CreatedAt != DateTime.MinValue
+                    ? volume.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    : localization.Get("Table_Value_NotAvailable")
+            };
+
+            // Apply highlight if selected
+            if (i == selectedIndex)
+            {
+                var highlightedContent = rowContent.Select(c => $"[black on yellow]{c}[/]").ToArray();
+                table.AddRow(highlightedContent);
+            }
+            else
+            {
+                table.AddRow(rowContent);
+            }
+        }
+    }
+
+    public static void RenderImagesTable(Table table, IList<ImageDto> images, int selectedIndex, ILocalizationService localization)
+    {
+        table.Border(TableBorder.Rounded);
+        table.AddColumn(localization.Get("Table_Header_ImageID"));
+        table.AddColumn(localization.Get("Table_Header_Repository"));
+        table.AddColumn(localization.Get("Table_Header_Tag"));
+        table.AddColumn(localization.Get("Table_Header_Size"));
+        table.AddColumn(localization.Get("Table_Header_Created"));
+        table.AddColumn(localization.Get("Table_Header_InUse"));
+
+        for (int i = 0; i < images.Count; i++)
+        {
+            var image = images[i];
+            var inUseColor = image.InUse ? "green" : "grey";
+            var inUseText = image.InUse
+                ? localization.Get("Table_Value_Yes")
+                : localization.Get("Table_Value_No");
+            var sizeMb = image.Size / 1024 / 1024;
+            var shortId = image.Id.Length > 12 ? image.Id[..12] : image.Id;
+
+            // Prepend cursor to ImageID if selected
+            var idWithCursor = i == selectedIndex ? $"[yellow]>[/] {shortId}" : shortId;
+
+            // Prepare row content
+            var rowContent = new[]
+            {
+                idWithCursor,
+                image.Repository,
+                image.Tag,
+                sizeMb.ToString(),
+                image.CreatedAt != DateTime.MinValue
+                    ? image.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                    : localization.Get("Table_Value_NotAvailable"),
+                $"[{inUseColor}]{inUseText}[/]"
+            };
+
+            // Apply highlight if selected
+            if (i == selectedIndex)
+            {
+                var highlightedContent = rowContent.Select(c => $"[black on yellow]{c}[/]").ToArray();
+                table.AddRow(highlightedContent);
+            }
+            else
+            {
+                table.AddRow(rowContent);
+            }
+        }
+    }
 }

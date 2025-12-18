@@ -21,8 +21,6 @@ public sealed class VolumeMenu
     {
         while (true)
         {
-            DisplayHelper.DisplayTitle(_localization.Get("Volume_Title_Management"), _localization);
-
             var volumes = await AnsiConsole.Status()
                 .Spinner(Spinner.Known.Dots)
                 .StartAsync(_localization.Get("Volume_Status_Loading"), async ctx =>
@@ -32,63 +30,37 @@ public sealed class VolumeMenu
 
             if (!volumes.Any())
             {
+                DisplayHelper.DisplayTitle(_localization.Get("Volume_Title_Management"), _localization);
                 DisplayHelper.DisplayError(_localization.Get("Volume_Error_NoVolumesFound"), _localization);
                 AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKeyReturn"));
                 Console.ReadKey(true);
                 return;
             }
 
-            DisplayHelper.DisplayVolumes(volumes, _localization);
+            var actionKeys = new Dictionary<ConsoleKey, string>
+            {
+                { ConsoleKey.D, "Delete" }
+            };
 
-            AnsiConsole.WriteLine();
-
-            var backText = _localization.Get("UI_Choice_BackToMainMenu");
-            var allChoices = new List<object> { backText };
-            allChoices.AddRange(volumes);
-
-            var selectedOption = AnsiConsole.Prompt(
-                new SelectionPrompt<object>()
-                    .Title(_localization.Get("Volume_Prompt_SelectVolume"))
-                    .AddChoices(allChoices)
-                    .UseConverter(choice => choice is VolumeDto v
-                        ? $"{Markup.Escape(v.Name)} ({(v.InUse ? _localization.Get("Volume_Status_InUse") : _localization.Get("Volume_Status_NotInUse"))})"
-                        : choice.ToString()!)
+            var result = TableSelectionHelper.SelectFromTable(
+                volumes,
+                DisplayHelper.RenderVolumesTable,
+                _localization.Get("Volume_Title_Management"),
+                _localization.Get("UI_Choice_BackToMainMenu"),
+                _localization.Get("Volume_Prompt_Actions"),
+                actionKeys,
+                _localization
             );
 
-            if (selectedOption is string)
+            if (result.IsBack)
             {
                 return;
             }
 
-            var selectedVolume = (VolumeDto)selectedOption;
-            var action = await PromptForActionAsync();
-
-            if (action == ActionType.Back)
+            if (result.SelectedItem != null && result.Action == "Delete")
             {
-                return;
+                await DeleteVolumeAsync(result.SelectedItem);
             }
-
-            if (action == ActionType.Delete)
-            {
-                await DeleteVolumeAsync(selectedVolume);
-            }
-        }
-    }
-
-    private async Task<ActionType> PromptForActionAsync()
-    {
-        AnsiConsole.MarkupLine(_localization.Get("Volume_Prompt_Actions"));
-
-        while (true)
-        {
-            var key = Console.ReadKey(true);
-
-            return key.Key switch
-            {
-                ConsoleKey.D => ActionType.Delete,
-                ConsoleKey.Escape => ActionType.Back,
-                _ => await PromptForActionAsync()
-            };
         }
     }
 
@@ -129,11 +101,5 @@ public sealed class VolumeMenu
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
         Console.ReadKey(true);
-    }
-
-    private enum ActionType
-    {
-        Delete,
-        Back
     }
 }

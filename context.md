@@ -365,6 +365,126 @@ dotnet run
 - [x] Volume "In Use" status displays correctly
 - [x] Image menu fully localized with Image.Strings resources
 
+## MVP 4 - Integrated Table Navigation (2025-12-18)
+
+### Features Implemented
+
+#### 1. Integrated Table Selection with Visual Feedback
+- Replaced separate table display + selection list with unified table-based navigation
+- "← Back to Main Menu" option now appears above the table (outside) for better visibility
+- Navigation using arrow keys (↑↓) directly within the table view
+- Visual selection indicator with ">" cursor in yellow color
+- Full row highlighting with yellow background for selected items
+- Cursor indicator prepended to first data column (no empty columns)
+
+**Implementation Details:**
+- **Containers**: Cursor prepended to ID column
+- **Volumes**: Cursor prepended to Name column
+- **Images**: Cursor prepended to ImageID column
+- Column order optimized: ID/Name first for better visual flow with cursor
+
+**Files Created:**
+- `src/FancyContainerConsole/UI/Helpers/TableSelectionHelper.cs`
+  - Generic table selection helper with keyboard navigation
+  - `TableSelectionResult<T>` class to hold selection and action data
+  - Supports custom action keys via Dictionary<ConsoleKey, string>
+  - Displays help text from localization for available actions
+  - Returns result containing selected item, action, or back flag
+
+**Files Modified:**
+- `src/FancyContainerConsole/UI/Helpers/DisplayHelper.cs`
+  - Added `RenderContainersTable()` with selection index parameter
+  - Added `RenderVolumesTable()` with selection index parameter
+  - Added `RenderImagesTable()` with selection index parameter
+  - Each method handles cursor indicator and row highlighting
+  - Reordered columns to put ID/Name first
+- `src/FancyContainerConsole/UI/Menus/ContainerMenu.cs`
+  - Replaced `SelectionPrompt` with `TableSelectionHelper.SelectFromTable`
+  - Removed `PromptForActionAsync()` method
+  - Removed `ActionType` enum
+  - Updated `HandleActionAsync()` to accept string action instead of enum
+- `src/FancyContainerConsole/UI/Menus/VolumeMenu.cs`
+  - Replaced `SelectionPrompt` with `TableSelectionHelper.SelectFromTable`
+  - Removed `PromptForActionAsync()` method
+  - Removed `ActionType` enum
+- `src/FancyContainerConsole/UI/Menus/ImageMenu.cs`
+  - Replaced `SelectionPrompt` with `TableSelectionHelper.SelectFromTable`
+  - Removed `PromptForActionAsync()` method
+  - Removed `ActionType` enum
+
+#### 2. Direct Action Key Access
+- Actions can now be triggered directly while navigating the table
+- No need to press Enter first, then select an action
+- Streamlined workflow: Navigate → Press action key → Execute immediately
+- Action keys remain the same (L, S, D, C) but are now contextual to selection
+
+**Keyboard Shortcuts:**
+- **↑/↓**: Navigate through items
+- **Enter**: Select "Back to Main Menu" (when highlighted)
+- **ESC**: Quick return to main menu (from anywhere)
+- **L/S/D/C**: Execute action on currently selected item (containers)
+- **D**: Delete selected item (volumes/images)
+- **C**: View details (images)
+
+**User Experience Improvement:**
+- Previous: Select item → Press Enter → See actions → Press action key
+- Now: Navigate to item → Press action key directly (1 fewer step)
+
+#### 3. Auto-Refresh After Container Start/Stop
+- Container table automatically refreshes after start/stop operations
+- Removed manual "press any key to continue" pause
+- Success/error messages briefly display in the spinner status (1-2 seconds)
+- Seamless loop back to updated table with new container states
+- User can immediately perform another action without manual refresh
+
+**Files Modified:**
+- `src/FancyContainerConsole/UI/Menus/ContainerMenu.cs`
+  - Updated `StartStopContainerAsync()` to show status in spinner
+  - Removed `AnsiConsole.WriteLine()` and `Console.ReadKey()` pause
+  - Added `Task.Delay(1000)` for success messages
+  - Added `Task.Delay(2000)` for error messages
+  - Table refreshes automatically by returning to menu loop
+
+#### 4. Fixed Enter Key Navigation Bug
+- Fixed bug where Enter key stopped working on "Back to Main Menu" after refreshing
+- Added explicit Enter key handler in `TableSelectionHelper`
+- Enter key now properly returns to main menu when back option is selected
+
+**Files Modified:**
+- `src/FancyContainerConsole/UI/Helpers/TableSelectionHelper.cs`
+  - Added `case ConsoleKey.Enter:` handler
+  - Checks if selectedIndex == -1 (back option)
+  - Returns `TableSelectionResult<T>` with `IsBack = true`
+
+### Key Design Decisions
+
+1. **Unified Navigation Pattern**: Single, consistent navigation system across all resource types (containers, volumes, images) for better UX predictability
+
+2. **Visual Hierarchy**: "Back to Main Menu" placed outside and above the table to distinguish it from table content, making navigation clearer
+
+3. **Performance Optimization**: Auto-refresh eliminates unnecessary user interaction while providing brief visual feedback for operation completion
+
+4. **Action Result Pattern**: `TableSelectionResult<T>` encapsulates both item selection and action choice, enabling clean separation of concerns
+
+5. **Cursor Integration**: Prepending cursor to first data column (instead of separate empty column) maximizes screen space while maintaining clear visual indication
+
+### Testing Checklist
+- [x] Table navigation works with arrow keys (↑↓)
+- [x] ">" cursor displays in yellow on selected row
+- [x] Selected row highlights with yellow background
+- [x] "← Back to Main Menu" displays above table
+- [x] Enter key works on "Back to Main Menu" option
+- [x] ESC key returns to main menu from any selection
+- [x] Direct action keys work without Enter (L, S, D, C)
+- [x] Container start/stop auto-refreshes table
+- [x] Success messages display briefly (1 second)
+- [x] Error messages display briefly (2 seconds)
+- [x] No manual refresh needed after state changes
+- [x] Cursor aligned with first data column (ID/Name)
+- [x] No empty columns in tables
+- [x] All 44 unit tests pass
+- [x] Build completes successfully
+
 ## Next Steps / Future Enhancements
 - Add filtering/search functionality in dashboards
 - Implement container stats display (CPU, memory usage)
@@ -374,3 +494,5 @@ dotnet run
 - Add more language translations (Spanish, German, etc.)
 - Implement pluralization support for dynamic text
 - Add translation validation tests
+- Consider adding pagination for large lists
+- Add color theme customization options
