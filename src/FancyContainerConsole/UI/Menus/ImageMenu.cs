@@ -21,8 +21,6 @@ public sealed class ImageMenu
     {
         while (true)
         {
-            DisplayHelper.DisplayTitle(_localization.Get("Image_Title_Management"), _localization);
-
             var images = await AnsiConsole.Status()
                 .Spinner(Spinner.Known.Dots)
                 .StartAsync(_localization.Get("Image_Status_Loading"), async ctx =>
@@ -32,68 +30,46 @@ public sealed class ImageMenu
 
             if (!images.Any())
             {
+                DisplayHelper.DisplayTitle(_localization.Get("Image_Title_Management"), _localization);
                 DisplayHelper.DisplayError(_localization.Get("Image_Error_NoImagesFound"), _localization);
                 AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKeyReturn"));
                 Console.ReadKey(true);
                 return;
             }
 
-            DisplayHelper.DisplayImages(images, _localization);
+            var actionKeys = new Dictionary<ConsoleKey, string>
+            {
+                { ConsoleKey.D, "Delete" },
+                { ConsoleKey.C, "Details" }
+            };
 
-            AnsiConsole.WriteLine();
-
-            var backText = _localization.Get("UI_Choice_BackToMainMenu");
-            var allChoices = new List<object> { backText };
-            allChoices.AddRange(images);
-
-            var selectedOption = AnsiConsole.Prompt(
-                new SelectionPrompt<object>()
-                    .Title(_localization.Get("Image_Prompt_SelectImage"))
-                    .AddChoices(allChoices)
-                    .UseConverter(choice => choice is ImageDto img
-                        ? $"{Markup.Escape(img.Repository)}:{Markup.Escape(img.Tag)} ({(img.InUse ? _localization.Get("Image_Status_InUse") : _localization.Get("Image_Status_NotInUse"))})"
-                        : choice.ToString()!)
+            var result = TableSelectionHelper.SelectFromTable(
+                images,
+                DisplayHelper.RenderImagesTable,
+                _localization.Get("Image_Title_Management"),
+                _localization.Get("UI_Choice_BackToMainMenu"),
+                _localization.Get("Image_Prompt_Actions"),
+                actionKeys,
+                _localization
             );
 
-            if (selectedOption is string)
+            if (result.IsBack)
             {
                 return;
             }
 
-            var selectedImage = (ImageDto)selectedOption;
-            var action = await PromptForActionAsync();
-
-            if (action == ActionType.Back)
+            if (result.SelectedItem != null && result.Action != null)
             {
-                return;
+                switch (result.Action)
+                {
+                    case "Delete":
+                        await DeleteImageAsync(result.SelectedItem);
+                        break;
+                    case "Details":
+                        await ViewDetailsAsync(result.SelectedItem);
+                        break;
+                }
             }
-
-            if (action == ActionType.Delete)
-            {
-                await DeleteImageAsync(selectedImage);
-            }
-            else if (action == ActionType.Details)
-            {
-                await ViewDetailsAsync(selectedImage);
-            }
-        }
-    }
-
-    private async Task<ActionType> PromptForActionAsync()
-    {
-        AnsiConsole.MarkupLine(_localization.Get("Image_Prompt_Actions"));
-
-        while (true)
-        {
-            var key = Console.ReadKey(true);
-
-            return key.Key switch
-            {
-                ConsoleKey.D => ActionType.Delete,
-                ConsoleKey.C => ActionType.Details,
-                ConsoleKey.Escape => ActionType.Back,
-                _ => await PromptForActionAsync()
-            };
         }
     }
 
@@ -146,12 +122,5 @@ public sealed class ImageMenu
         Console.ReadKey(true);
 
         await Task.CompletedTask;
-    }
-
-    private enum ActionType
-    {
-        Delete,
-        Details,
-        Back
     }
 }

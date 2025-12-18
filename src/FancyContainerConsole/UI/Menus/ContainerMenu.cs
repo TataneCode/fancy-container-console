@@ -21,8 +21,6 @@ public sealed class ContainerMenu
     {
         while (true)
         {
-            DisplayHelper.DisplayTitle(_localization.Get("UI_Title_ManageContainer"), _localization);
-
             var containers = await AnsiConsole.Status()
                 .Spinner(Spinner.Known.Dots)
                 .StartAsync(_localization.Get("Container_Status_Loading"), async ctx =>
@@ -32,86 +30,57 @@ public sealed class ContainerMenu
 
             if (!containers.Any())
             {
+                DisplayHelper.DisplayTitle(_localization.Get("UI_Title_ManageContainer"), _localization);
                 DisplayHelper.DisplayError(_localization.Get("Container_Error_NoContainersFound"), _localization);
                 AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKeyReturn"));
                 Console.ReadKey(true);
                 return;
             }
 
-            DisplayHelper.DisplayContainers(containers, _localization);
-
-            AnsiConsole.WriteLine();
-
-            var backText = _localization.Get("UI_Choice_BackToMainMenu");
-            var allChoices = new List<object> { backText };
-            allChoices.AddRange(containers);
-
-            var selectedOption = AnsiConsole.Prompt(
-                new SelectionPrompt<object>()
-                    .Title(_localization.Get("UI_Prompt_SelectContainer"))
-                    .AddChoices(allChoices)
-                    .UseConverter(choice => choice is ContainerDto c
-                        ? $"{Markup.Escape(c.Name)} ({Markup.Escape(c.State)})"
-                        : choice.ToString()!)
-            );
-
-            if (selectedOption is string)
+            var actionKeys = new Dictionary<ConsoleKey, string>
             {
-                return;
-            }
-
-            var selectedContainer = (ContainerDto)selectedOption;
-            var action = await PromptForActionAsync();
-
-            if (action == ActionType.Back)
-            {
-                return;
-            }
-
-            await HandleActionAsync(selectedContainer, action);
-        }
-    }
-
-    private Task<ActionType> PromptForActionAsync()
-    {
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine(_localization.Get("UI_Prompt_ContainerActions"));
-
-        while (true)
-        {
-            var key = Console.ReadKey(true);
-
-            var action = key.Key switch
-            {
-                ConsoleKey.L => ActionType.ViewLogs,
-                ConsoleKey.S => ActionType.StartStop,
-                ConsoleKey.D => ActionType.Delete,
-                ConsoleKey.C => ActionType.ViewDetails,
-                ConsoleKey.Escape => ActionType.Back,
-                _ => (ActionType?)null
+                { ConsoleKey.L, "ViewLogs" },
+                { ConsoleKey.S, "StartStop" },
+                { ConsoleKey.D, "Delete" },
+                { ConsoleKey.C, "ViewDetails" }
             };
 
-            if (action.HasValue)
+            var result = TableSelectionHelper.SelectFromTable(
+                containers,
+                DisplayHelper.RenderContainersTable,
+                _localization.Get("UI_Title_ManageContainer"),
+                _localization.Get("UI_Choice_BackToMainMenu"),
+                _localization.Get("UI_Prompt_ContainerActions"),
+                actionKeys,
+                _localization
+            );
+
+            if (result.IsBack)
             {
-                return Task.FromResult(action.Value);
+                return;
+            }
+
+            if (result.SelectedItem != null && result.Action != null)
+            {
+                await HandleActionAsync(result.SelectedItem, result.Action);
             }
         }
     }
 
-    private async Task HandleActionAsync(ContainerDto container, ActionType action)
+    private async Task HandleActionAsync(ContainerDto container, string action)
     {
         switch (action)
         {
-            case ActionType.ViewLogs:
+            case "ViewLogs":
                 await ViewLogsAsync(container.Id);
                 break;
-            case ActionType.StartStop:
+            case "StartStop":
                 await StartStopContainerAsync(container);
                 break;
-            case ActionType.Delete:
+            case "Delete":
                 await DeleteContainerAsync(container);
                 break;
-            case ActionType.ViewDetails:
+            case "ViewDetails":
                 await ViewDetailsAsync(container);
                 break;
         }
@@ -156,24 +125,23 @@ public sealed class ContainerMenu
                     if (isRunning)
                     {
                         await _containerService.StopContainerAsync(container.Id);
-                        DisplayHelper.DisplaySuccess(_localization.Get("Container_Success_Stopped"), _localization);
+                        ctx.Status(_localization.Get("Container_Success_Stopped"));
+                        await Task.Delay(1000); // Brief pause to show success message
                     }
                     else
                     {
                         await _containerService.StartContainerAsync(container.Id);
-                        DisplayHelper.DisplaySuccess(_localization.Get("Container_Success_Started"), _localization);
+                        ctx.Status(_localization.Get("Container_Success_Started"));
+                        await Task.Delay(1000); // Brief pause to show success message
                     }
                 }
                 catch (Exception ex)
                 {
                     var errorKey = isRunning ? "Container_Error_FailedToStop" : "Container_Error_FailedToStart";
-                    DisplayHelper.DisplayError(_localization.Get(errorKey, ex.Message), _localization);
+                    ctx.Status(_localization.Get(errorKey, ex.Message));
+                    await Task.Delay(2000); // Longer pause for errors
                 }
             });
-
-        AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine(_localization.Get("UI_Message_PressAnyKey"));
-        Console.ReadKey(true);
     }
 
     private async Task DeleteContainerAsync(ContainerDto container)
@@ -217,14 +185,5 @@ public sealed class ContainerMenu
         Console.ReadKey(true);
 
         await Task.CompletedTask;
-    }
-
-    private enum ActionType
-    {
-        ViewLogs,
-        StartStop,
-        Delete,
-        ViewDetails,
-        Back
     }
 }
