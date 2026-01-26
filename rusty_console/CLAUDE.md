@@ -70,6 +70,26 @@ cargo run
 - Error popup display
 - Main menu navigation
 
+## GitHub Actions Workflows
+
+### CI (`ci.yml`)
+Runs on push/PR to main:
+- `cargo check` - Compilation check
+- `cargo fmt` - Format check
+- `cargo clippy` - Linting
+- `cargo test` - Tests
+- Build on Linux, Windows, macOS
+
+### Release (`release.yml`)
+Triggered by version tags (e.g., `git tag v0.1.0 && git push --tags`):
+- Builds binaries for:
+  - Linux x86_64 (glibc)
+  - Linux x86_64 (musl - static)
+  - Windows x86_64
+  - macOS x86_64
+  - macOS ARM64 (Apple Silicon)
+- Creates GitHub Release with all binaries
+
 ## Future Improvements
 - Add loading indicators
 - Add search/filter functionality
